@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Distribuição Normal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Simulação de Distribuição Normal</h1>
+    <form id="normal-distribution-form">
+        <label for="mean">Média:</label>
+        <input type="number" id="mean" name="mean" step="0.1" value="0" required>
+        
+        <label for="num_values">Número de valores:</label>
+        <input type="number" id="num_values" name="num_values" min="100" max="1000000" value="10000" required>
+        
+        <label for="std_dev">Desvio padrão:</label>
+        <input type="number" id="std_dev" name="std_dev" step="0.1" min="0.1" value="1" required>
+        
+        <button type="submit">Executar simulação</button>
+    </form>
+    <div id="result"></div>
+    <div id="plot"></div>
+
+    <div id="interval-calculator" style="display: none;">
+        <h2>Calculadora de Intervalo</h2>
+        <form id="interval-form">
+            <label for="min_val">Valor Mínimo:</label>
+            <input type="text" id="min_val" name="min_val" placeholder="-inf ou número" required>
+            
+            <label for="max_val">Valor Máximo:</label>
+            <input type="text" id="max_val" name="max_val" placeholder="inf ou número" required>
+            
+            <button type="submit">Calcular Porcentagem</button>
+        </form>
+        <div id="percentage-result"></div>
+    </div>
+
+    <script>
+        let generatedValues = [];
+
+        document.getElementById('normal-distribution-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').innerHTML = `
+                    <p>Média real: ${data.actual_mean.toFixed(4)}</p>
+                    <p>Desvio padrão real: ${data.actual_std_dev.toFixed(4)}</p>
+                `;
+                document.getElementById('plot').innerHTML = `<img src="data:image/png;base64,${data.plot_url}" alt="Histograma da Distribuição Normal">`;
+                document.getElementById('interval-calculator').style.display = 'block';
+                generatedValues = data.values;
+            });
+        });
+
+        document.getElementById('interval-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const minVal = document.getElementById('min_val').value;
+            const maxVal = document.getElementById('max_val').value;
+
+            fetch('/calculate_percentage', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    values: generatedValues,
+                    min_val: minVal,
+                    max_val: maxVal
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('percentage-result').innerHTML = `
+                    <p>Porcentagem de valores no intervalo [${minVal}, ${maxVal}]: ${data.percentage.toFixed(2)}%</p>
+                `;
+            });
+        });
+    </script>
+</body>
+</html>
