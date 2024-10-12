@@ -1,53 +1,26 @@
 body {
-    font-family: Arial, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
+    background-color: #f8f9fa;
+}
+
+.container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 20px;
+    margin-top: 20px;
 }
 
 h1, h2 {
-    text-align: center;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-label {
-    margin-top: 10px;
-}
-
-input, button {
-    margin: 5px 0;
-    padding: 5px 10px;
-}
-
-button {
-    margin-top: 15px;
-    cursor: pointer;
+    color: #007bff;
 }
 
 #result, #percentage-result {
-    text-align: center;
-    font-size: 1.2em;
-    margin-bottom: 20px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    padding: 10px;
 }
 
 #plot {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-#interval-calculator {
-    border-top: 1px solid #ccc;
-    padding-top: 20px;
-    margin-top: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
 }
