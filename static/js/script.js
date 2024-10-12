@@ -1,6 +1,5 @@
-let variableCounter = 1;
 let generatedValues = [];
-let chart = null;  // Adicione esta linha
+let chart = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     const addRowButton = document.getElementById('add-row');
@@ -29,7 +28,7 @@ function addTableRow() {
     }
 
     const newRow = variablesTable.insertRow();
-    const variableId = `V${variableCounter}`;
+    const variableId = `V${variablesTable.rows.length}`;
     
     newRow.innerHTML = `
         <td class="variable-id">${variableId}</td>
@@ -56,7 +55,6 @@ function addTableRow() {
         updateVariableIds();
     });
 
-    variableCounter++;
     updateVariableIds();
 }
 
@@ -68,7 +66,6 @@ function updateVariableIds() {
             idCell.textContent = `V${i + 1}`;
         }
     }
-    variableCounter = rows.length + 1;
 }
 
 function updateParameterFields(selectElement) {
@@ -175,40 +172,17 @@ function handleFormSubmit(e) {
         
         if (Array.isArray(data.values) && data.values.length > 0) {
             generatedValues = data.values;
-            createHistogram(generatedValues, data.mean, data.std_dev);
+            createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
             
-            if (data.simulation_file) {
-                const downloadLink = document.createElement('a');
-                downloadLink.href = `/download/${data.simulation_file}`;
-                downloadLink.textContent = 'Baixar dados da simulação';
-                downloadLink.className = 'btn btn-primary mt-3';
-                downloadLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    fetch(this.href)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.blob();
-                        })
-                        .then(blob => {
-                            const url = window.URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.style.display = 'none';
-                            a.href = url;
-                            a.download = data.simulation_file;
-                            document.body.appendChild(a);
-                            a.click();
-                            window.URL.revokeObjectURL(url);
-                        })
-                        .catch(error => {
-                            console.error('Erro ao baixar o arquivo:', error);
-                            alert(`Erro ao baixar o arquivo: ${error.message}`);
-                        });
-                });
-                document.getElementById('result').appendChild(downloadLink);
-            }
+            // Criar botão para gerar PDF
+            const generatePdfButton = document.createElement('button');
+            generatePdfButton.textContent = 'Gerar Relatório PDF';
+            generatePdfButton.className = 'btn btn-primary mt-3';
+            generatePdfButton.addEventListener('click', function() {
+                generatePDF(data);
+            });
+            document.getElementById('result').appendChild(generatePdfButton);
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
@@ -255,8 +229,8 @@ function handleIntervalCalculation(e) {
     });
 }
 
-function createHistogram(values, mean, stdDev) {
-    const ctx = document.getElementById('plot').getContext('2d');
+function createHistogram(values, mean, stdDev, canvasId) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
     
     const numBins = 50;
     const minValue = Math.min(...values);
@@ -269,14 +243,7 @@ function createHistogram(values, mean, stdDev) {
         bins[binIndex]++;
     });
     
-    const totalCount = values.length;
-    const normalizedBins = bins.map(count => count / (totalCount * binWidth));
-    
-    const xValues = Array.from({length: numBins}, (_, i) => minValue + (i + 0.5) * binWidth);
-    
-    const yValues = xValues.map(x => 
-        (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2))
-    );
+    const labels = Array.from({length: numBins}, (_, i) => (minValue + (i + 0.5) * binWidth).toFixed(2));
     
     if (chart) {
         chart.destroy();
@@ -285,21 +252,13 @@ function createHistogram(values, mean, stdDev) {
     chart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: xValues.map(x => x.toFixed(2)),
+            labels: labels,
             datasets: [{
-                label: 'Histograma',
-                data: normalizedBins,
+                label: 'Frequência',
+                data: bins,
                 backgroundColor: 'rgba(0, 123, 255, 0.5)',
                 borderColor: 'rgba(0, 123, 255, 1)',
                 borderWidth: 1
-            }, {
-                label: 'Curva Normal Teórica',
-                data: yValues,
-                type: 'line',
-                fill: false,
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 2,
-                pointRadius: 0
             }]
         },
         options: {
@@ -314,7 +273,7 @@ function createHistogram(values, mean, stdDev) {
                 y: {
                     title: {
                         display: true,
-                        text: 'Densidade de Probabilidade'
+                        text: 'Frequência'
                     },
                     beginAtZero: true
                 }
@@ -322,9 +281,282 @@ function createHistogram(values, mean, stdDev) {
             plugins: {
                 title: {
                     display: true,
-                    text: `Distribuição (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`
+                    text: `Histograma (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`
                 }
             }
         }
     });
+}
+
+function createHistogramForPDF(values, mean, stdDev, title) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;  // Reduzido de 800 para 600
+        canvas.height = 400; // Reduzido de 600 para 400
+        const ctx = canvas.getContext('2d');
+        
+        const numBins = 50;
+        const minValue = Math.min(...values);
+        const maxValue = Math.max(...values);
+        const binWidth = (maxValue - minValue) / numBins;
+        
+        const bins = Array(numBins).fill(0);
+        values.forEach(value => {
+            const binIndex = Math.min(Math.floor((value - minValue) / binWidth), numBins - 1);
+            bins[binIndex]++;
+        });
+        
+        const labels = Array.from({length: numBins}, (_, i) => (minValue + (i + 0.5) * binWidth).toFixed(2));
+        
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Frequência',
+                    data: bins,
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: false,
+                animation: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Valores'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Frequência'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${title} (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`,
+                        font: {
+                            size: 14  // Reduzido de 16 para 14
+                        }
+                    },
+                    legend: {
+                        labels: {
+                            font: {
+                                size: 12  // Reduzido de 14 para 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        setTimeout(() => {
+            resolve(canvas.toDataURL('image/png'));
+        }, 500);
+    });
+}
+
+function calculateCustomStatistics(values, distributionType) {
+    if (!Array.isArray(values)) {
+        console.error('Valores inválidos recebidos:', values);
+        return {
+            'Erro': 'Dados inválidos'
+        };
+    }
+
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+    
+    switch (distributionType) {
+        case 'triangular':
+        case 'uniform':
+            return {
+                'Valor Médio Real': mean.toFixed(4),
+                'Valor Mínimo Real': min.toFixed(4),
+                'Valor Máximo Real': max.toFixed(4)
+            };
+        case 'normal':
+            return {
+                'Valor Médio Real': mean.toFixed(4),
+                'Desvio Padrão Real': stdDev.toFixed(4),
+                'Valor Mínimo': min.toFixed(4),
+                'Valor Máximo': max.toFixed(4)
+            };
+        case 'fixed':
+            return {
+                'Valor Fixo': values[0].toFixed(4)
+            };
+        default:
+            return {
+                'Valor Médio': mean.toFixed(4),
+                'Desvio Padrão': stdDev.toFixed(4),
+                'Valor Mínimo': min.toFixed(4),
+                'Valor Máximo': max.toFixed(4)
+            };
+    }
+}
+
+async function generatePDF(data) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Relatório de Simulação', 105, 15, null, null, 'center');
+    
+    let yPosition = 30;
+    
+    // Informações das variáveis
+    for (let varId in data.variables) {
+        const varName = data.variables[varId].name || varId; // Usa o nome da variável se disponível, senão usa o ID
+        
+        // Verifica se há espaço suficiente na página atual, senão adiciona uma nova página
+        if (yPosition > 230) {
+            doc.addPage();
+            yPosition = 20;
+        }
+        
+        doc.setFontSize(14);
+        doc.text(`Variável: ${varName}`, 20, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(10);
+        const stats = calculateStatistics(data.variables[varId]);
+        for (let stat in stats) {
+            doc.text(`${stat}: ${stats[stat].toFixed(4)}`, 30, yPosition);
+            yPosition += 7;
+        }
+        
+        // Criar e adicionar o gráfico
+        const chartImg = await createHistogramForPDF(data.variables[varId], stats['Média'], stats['Desvio Padrão'], `Histograma - ${varName}`);
+        doc.addImage(chartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55); // Reduzido em 45%
+        
+        yPosition += 100 * 0.55 + 15; // Altura do gráfico reduzida + espaço extra
+    }
+    
+    // Resultado final
+    if (yPosition > 230) {
+        doc.addPage();
+        yPosition = 20;
+    }
+    
+    doc.setFontSize(14);
+    doc.text('Resultado Final', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(10);
+    const finalStats = calculateStatistics(data.values);
+    for (let stat in finalStats) {
+        doc.text(`${stat}: ${finalStats[stat].toFixed(4)}`, 30, yPosition);
+        yPosition += 7;
+    }
+    
+    // Criar e adicionar o gráfico do resultado final
+    const finalChartImg = await createHistogramForPDF(data.values, finalStats['Média'], finalStats['Desvio Padrão'], 'Histograma - Resultado Final');
+    doc.addImage(finalChartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55); // Reduzido em 45%
+    
+    // Salvar o PDF
+    doc.save('relatorio_simulacao.pdf');
+}
+
+function calculateStatistics(values) {
+    const mean = values.reduce((a, b) => a + b) / values.length;
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+    
+    return {
+        'Média': mean,
+        'Desvio Padrão': stdDev,
+        'Mínimo': Math.min(...values),
+        'Máximo': Math.max(...values)
+    };
+}
+
+// Nova função createHistogramForPDF (adicione após generatePDF)
+function createHistogramForPDF(values, mean, stdDev, title) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 600;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        
+        const numBins = 50;
+        const minValue = Math.min(...values);
+        const maxValue = Math.max(...values);
+        const binWidth = (maxValue - minValue) / numBins;
+        
+        const bins = Array(numBins).fill(0);
+        values.forEach(value => {
+            const binIndex = Math.min(Math.floor((value - minValue) / binWidth), numBins - 1);
+            bins[binIndex]++;
+        });
+        
+        const labels = Array.from({length: numBins}, (_, i) => (minValue + (i + 0.5) * binWidth).toFixed(2));
+        
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Frequência',
+                    data: bins,
+                    backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: false,
+                animation: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Valores'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Frequência'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${title} (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`
+                    }
+                }
+            }
+        });
+
+        // Esperar um momento para garantir que o gráfico seja renderizado
+        setTimeout(() => {
+            resolve(canvas.toDataURL('image/png'));
+        }, 500);
+    });
+}
+
+function calculateStatistics(values) {
+    const mean = values.reduce((a, b) => a + b) / values.length;
+    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+    
+    return {
+        'Média': mean,
+        'Desvio Padrão': stdDev,
+        'Mínimo': Math.min(...values),
+        'Máximo': Math.max(...values)
+    };
 }
