@@ -1,5 +1,6 @@
+let variableCounter = 1;
 let generatedValues = [];
-let chart = null;
+let chart = null;  // Adicione esta linha
 
 document.addEventListener('DOMContentLoaded', function() {
     const addRowButton = document.getElementById('add-row');
@@ -28,7 +29,7 @@ function addTableRow() {
     }
 
     const newRow = variablesTable.insertRow();
-    const variableId = `V${variablesTable.rows.length}`;
+    const variableId = `V${variableCounter}`;
     
     newRow.innerHTML = `
         <td class="variable-id">${variableId}</td>
@@ -55,6 +56,7 @@ function addTableRow() {
         updateVariableIds();
     });
 
+    variableCounter++;
     updateVariableIds();
 }
 
@@ -66,6 +68,7 @@ function updateVariableIds() {
             idCell.textContent = `V${i + 1}`;
         }
     }
+    variableCounter = rows.length + 1;
 }
 
 function updateParameterFields(selectElement) {
@@ -92,9 +95,9 @@ function updateParameterFields(selectElement) {
             break;
         case 'triangular':
             parametersCell.innerHTML = `
-                <input type="number" class="form-control" name="mid_point" placeholder="Ponto médio" step="any" required>
-                <input type="number" class="form-control" name="min_value" placeholder="Ponto mínimo" step="any" required>
-                <input type="number" class="form-control" name="max_value" placeholder="Ponto máximo" step="any" required>
+                <input type="number" class="form-control" name="mid_point" placeholder="Valor médio" step="any" required>
+                <input type="number" class="form-control" name="min_value" placeholder="Valor mínimo" step="any" required>
+                <input type="number" class="form-control" name="max_value" placeholder="Valor máximo" step="any" required>
             `;
             break;
         default:
@@ -144,7 +147,7 @@ function handleFormSubmit(e) {
     }
 
     const data = { variables: variables, function: functionInput };
-    console.log('Dados enviados para o servidor:', data);
+    console.log('Dados enviados para o servidor:', JSON.stringify(data, null, 2));
 
     fetch('/', {
         method: 'POST',
@@ -156,6 +159,7 @@ function handleFormSubmit(e) {
     .then(response => {
         if (!response.ok) {
             return response.text().then(text => {
+                console.error('Resposta do servidor:', text);
                 throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
             });
         }
@@ -173,6 +177,38 @@ function handleFormSubmit(e) {
             generatedValues = data.values;
             createHistogram(generatedValues, data.mean, data.std_dev);
             document.getElementById('interval-calculator').style.display = 'block';
+            
+            if (data.simulation_file) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `/download/${data.simulation_file}`;
+                downloadLink.textContent = 'Baixar dados da simulação';
+                downloadLink.className = 'btn btn-primary mt-3';
+                downloadLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    fetch(this.href)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = data.simulation_file;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                        })
+                        .catch(error => {
+                            console.error('Erro ao baixar o arquivo:', error);
+                            alert(`Erro ao baixar o arquivo: ${error.message}`);
+                        });
+                });
+                document.getElementById('result').appendChild(downloadLink);
+            }
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
@@ -200,7 +236,14 @@ function handleIntervalCalculation(e) {
             max_val: maxVal
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         document.getElementById('percentage-result').innerHTML = `
             <p><strong>Porcentagem de valores no intervalo [${minVal}, ${maxVal}]:</strong> ${data.percentage.toFixed(2)}%</p>
@@ -208,38 +251,29 @@ function handleIntervalCalculation(e) {
     })
     .catch(error => {
         console.error('Erro ao calcular a porcentagem:', error);
-        document.getElementById('percentage-result').innerHTML = '<p>Erro ao calcular a porcentagem. Por favor, tente novamente.</p>';
+        document.getElementById('percentage-result').innerHTML = `<p>Erro ao calcular a porcentagem: ${error.message}</p>`;
     });
 }
 
 function createHistogram(values, mean, stdDev) {
     const ctx = document.getElementById('plot').getContext('2d');
     
-    // Calcular os limites do histograma
+    const numBins = 50;
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
-    
-    // Determinar o número de bins (use um número fixo ou calcule baseado nos dados)
-    const numBins = 50;
-    
-    // Calcular a largura de cada bin
     const binWidth = (maxValue - minValue) / numBins;
     
-    // Criar os bins
     const bins = Array(numBins).fill(0);
     values.forEach(value => {
         const binIndex = Math.min(Math.floor((value - minValue) / binWidth), numBins - 1);
         bins[binIndex]++;
     });
     
-    // Normalizar os bins
     const totalCount = values.length;
     const normalizedBins = bins.map(count => count / (totalCount * binWidth));
     
-    // Criar os valores do eixo X (centro de cada bin)
     const xValues = Array.from({length: numBins}, (_, i) => minValue + (i + 0.5) * binWidth);
     
-    // Calcular a curva normal teórica
     const yValues = xValues.map(x => 
         (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2))
     );
@@ -275,11 +309,6 @@ function createHistogram(values, mean, stdDev) {
                     title: {
                         display: true,
                         text: 'Valores'
-                    },
-                    ticks: {
-                        callback: function(value, index, values) {
-                            return Number(this.getLabelForValue(value)).toFixed(2);
-                        }
                     }
                 },
                 y: {
@@ -291,16 +320,6 @@ function createHistogram(values, mean, stdDev) {
                 }
             },
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        title: function(context) {
-                            const index = context[0].dataIndex;
-                            const lowerBound = xValues[index] - binWidth / 2;
-                            const upperBound = xValues[index] + binWidth / 2;
-                            return `Intervalo: [${lowerBound.toFixed(2)}, ${upperBound.toFixed(2)}]`;
-                        }
-                    }
-                },
                 title: {
                     display: true,
                     text: `Distribuição (μ=${mean.toFixed(2)}, σ=${stdDev.toFixed(2)})`
