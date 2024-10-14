@@ -3,6 +3,7 @@ import numpy as np
 import logging
 from datetime import datetime
 from scipy import stats
+import random
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
@@ -18,6 +19,8 @@ def generate_distribution(distribution_type, params, num_values=NUM_SIMULATIONS)
         return np.random.uniform(params['min_value'], params['max_value'], num_values)
     elif distribution_type == 'triangular':
         return np.random.triangular(params['min_value'], params['mid_point'], params['max_value'], num_values)
+    elif distribution_type == 'binary':
+        return np.random.choice([0, 1], size=num_values)
     else:
         raise ValueError(f"Tipo de distribuição não suportado: {distribution_type}")
 

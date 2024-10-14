@@ -39,6 +39,7 @@ function addTableRow() {
                 <option value="normal">Normal</option>
                 <option value="uniform">Uniforme</option>
                 <option value="triangular">Triangular</option>
+                <option value="binary">Binária</option>
             </select>
         </td>
         <td><input type="text" class="form-control" name="variable_name" required></td>
@@ -97,6 +98,11 @@ function updateParameterFields(selectElement) {
                 <input type="number" class="form-control" name="max_value" placeholder="Valor máximo" step="any" required>
             `;
             break;
+        case 'binary':
+            parametersCell.innerHTML = `
+                <p>Distribuição binária (0 ou 1)</p>
+            `;
+            break;
         default:
             parametersCell.innerHTML = '';
     }
@@ -137,6 +143,9 @@ function handleFormSubmit(e) {
                 variable.mid_point = parseFloat(parameters[0].value);
                 variable.min_value = parseFloat(parameters[1].value);
                 variable.max_value = parseFloat(parameters[2].value);
+                break;
+            case 'binary':
+                // Não precisa de parâmetros adicionais
                 break;
         }
 
