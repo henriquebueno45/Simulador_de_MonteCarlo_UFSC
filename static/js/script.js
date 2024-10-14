@@ -224,8 +224,8 @@ function handleIntervalCalculation(e) {
             document.getElementById('percentage-result').innerHTML = `
                 <p><strong>Porcentagem de valores no intervalo [${data.min_val.toFixed(4)}, ${data.max_val.toFixed(4)}]:</strong> ${data.percentage.toFixed(2)}%</p>
             `;
-            // Recria o histograma com o intervalo destacado
-            createHistogram(generatedValues, data.mean, data.std_dev, 'plot', data.min_val, data.max_val);
+            // Atualiza o histograma com o intervalo destacado
+            updateHistogram(data.min_val, data.max_val);
         } else {
             throw new Error('A resposta do servidor não inclui a propriedade "percentage"');
         }
@@ -236,7 +236,7 @@ function handleIntervalCalculation(e) {
     });
 }
 
-function createHistogram(values, mean, stdDev, canvasId, minVal = null, maxVal = null) {
+function createHistogram(values, mean, stdDev, canvasId) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     
     const numBins = 50;
@@ -263,12 +263,7 @@ function createHistogram(values, mean, stdDev, canvasId, minVal = null, maxVal =
             datasets: [{
                 label: 'Frequência',
                 data: bins,
-                backgroundColor: labels.map(label => {
-                    const value = parseFloat(label);
-                    return (minVal !== null && maxVal !== null && value >= minVal && value <= maxVal) 
-                        ? 'rgba(255, 0, 0, 0.5)' 
-                        : 'rgba(0, 123, 255, 0.5)';
-                }),
+                backgroundColor: 'rgba(0, 123, 255, 0.5)',
                 borderColor: 'rgba(0, 123, 255, 1)',
                 borderWidth: 1
             }]
@@ -298,6 +293,20 @@ function createHistogram(values, mean, stdDev, canvasId, minVal = null, maxVal =
             }
         }
     });
+}
+
+function updateHistogram(minVal, maxVal) {
+    if (!chart) return;
+
+    const newBackgroundColors = chart.data.labels.map(label => {
+        const value = parseFloat(label);
+        return (value >= minVal && value <= maxVal) 
+            ? 'rgba(255, 0, 0, 0.5)' 
+            : 'rgba(0, 123, 255, 0.5)';
+    });
+
+    chart.data.datasets[0].backgroundColor = newBackgroundColors;
+    chart.update();
 }
 
 function createHistogramForPDF(values, mean, stdDev, title) {
