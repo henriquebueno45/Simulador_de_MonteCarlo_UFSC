@@ -245,7 +245,7 @@ function handleIntervalCalculation(e) {
     });
 }
 
-function createHistogram(values, mean, stdDev, canvasId) {
+function createHistogram(values, mean, stdDev, canvasId, minVal = null, maxVal = null) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     
     const numBins = 50;
@@ -260,7 +260,20 @@ function createHistogram(values, mean, stdDev, canvasId) {
     });
     
     const labels = Array.from({length: numBins}, (_, i) => (minValue + (i + 0.5) * binWidth).toFixed(2));
-    
+
+    // Calcula a curva normal teórica
+    const normalCurve = labels.map(label => {
+        const x = parseFloat(label);
+        const exponent = -0.5 * Math.pow((x - mean) / stdDev, 2);
+        return (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+    });
+
+    // Normaliza a curva para que se ajuste ao histograma
+    const maxBin = Math.max(...bins);
+    const maxCurve = Math.max(...normalCurve);
+    const scaleFactor = maxBin / maxCurve;
+    const scaledCurve = normalCurve.map(value => value * scaleFactor);
+
     if (chart) {
         chart.destroy();
     }
@@ -272,9 +285,22 @@ function createHistogram(values, mean, stdDev, canvasId) {
             datasets: [{
                 label: 'Frequência',
                 data: bins,
-                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                backgroundColor: labels.map(label => {
+                    const value = parseFloat(label);
+                    return (minVal !== null && maxVal !== null && value >= minVal && value <= maxVal) 
+                        ? 'rgba(255, 0, 0, 0.5)' 
+                        : 'rgba(0, 123, 255, 0.5)';
+                }),
                 borderColor: 'rgba(0, 123, 255, 1)',
                 borderWidth: 1
+            }, {
+                label: 'Curva Normal Teórica',
+                data: scaledCurve,
+                type: 'line',
+                borderColor: 'rgba(255, 99, 132, 1)', // Vermelho mais claro
+                borderWidth: 2,
+                fill: false,
+                pointRadius: 0 // Remove os pontos
             }]
         },
         options: {
