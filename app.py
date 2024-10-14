@@ -113,13 +113,31 @@ def calculate_percentage():
     try:
         data = request.json
         values = np.array(data['values'])
-        min_val = float(data['min_val']) if data['min_val'] != '-inf' else float('-inf')
-        max_val = float(data['max_val']) if data['max_val'] != 'inf' else float('inf')
+        
+        # Lidar com valores infinitos
+        min_val = data['min_val']
+        max_val = data['max_val']
+        
+        if min_val == '-inf' or min_val == '':
+            min_val = np.min(values)
+        else:
+            min_val = float(min_val)
+        
+        if max_val == 'inf' or max_val == '+inf' or max_val == '':
+            max_val = np.max(values)
+        else:
+            max_val = float(max_val)
         
         count = np.sum((values >= min_val) & (values <= max_val))
         percentage = (count / len(values)) * 100
         
-        return jsonify({'percentage': float(percentage)})
+        return jsonify({
+            'percentage': float(percentage),
+            'mean': float(np.mean(values)),
+            'std_dev': float(np.std(values)),
+            'min_val': float(min_val),
+            'max_val': float(max_val)
+        })
     except Exception as e:
         app.logger.error(f"Erro ao calcular porcentagem: {str(e)}")
         return jsonify({'error': str(e)}), 400

@@ -196,8 +196,8 @@ function handleFormSubmit(e) {
 
 function handleIntervalCalculation(e) {
     e.preventDefault();
-    const minVal = document.getElementById('min_val').value;
-    const maxVal = document.getElementById('max_val').value;
+    let minVal = document.getElementById('min_val').value.toLowerCase();
+    let maxVal = document.getElementById('max_val').value.toLowerCase();
 
     fetch('/calculate_percentage', {
         method: 'POST',
@@ -219,9 +219,16 @@ function handleIntervalCalculation(e) {
         return response.json();
     })
     .then(data => {
-        document.getElementById('percentage-result').innerHTML = `
-            <p><strong>Porcentagem de valores no intervalo [${minVal}, ${maxVal}]:</strong> ${data.percentage.toFixed(2)}%</p>
-        `;
+        console.log('Resposta do servidor para cálculo de porcentagem:', data);
+        if (data.percentage !== undefined) {
+            document.getElementById('percentage-result').innerHTML = `
+                <p><strong>Porcentagem de valores no intervalo [${data.min_val.toFixed(4)}, ${data.max_val.toFixed(4)}]:</strong> ${data.percentage.toFixed(2)}%</p>
+            `;
+            // Recria o histograma com o intervalo destacado
+            createHistogram(generatedValues, data.mean, data.std_dev, 'plot', data.min_val, data.max_val);
+        } else {
+            throw new Error('A resposta do servidor não inclui a propriedade "percentage"');
+        }
     })
     .catch(error => {
         console.error('Erro ao calcular a porcentagem:', error);
@@ -229,7 +236,7 @@ function handleIntervalCalculation(e) {
     });
 }
 
-function createHistogram(values, mean, stdDev, canvasId) {
+function createHistogram(values, mean, stdDev, canvasId, minVal = null, maxVal = null) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     
     const numBins = 50;
@@ -256,7 +263,12 @@ function createHistogram(values, mean, stdDev, canvasId) {
             datasets: [{
                 label: 'Frequência',
                 data: bins,
-                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                backgroundColor: labels.map(label => {
+                    const value = parseFloat(label);
+                    return (minVal !== null && maxVal !== null && value >= minVal && value <= maxVal) 
+                        ? 'rgba(255, 0, 0, 0.5)' 
+                        : 'rgba(0, 123, 255, 0.5)';
+                }),
                 borderColor: 'rgba(0, 123, 255, 1)',
                 borderWidth: 1
             }]
