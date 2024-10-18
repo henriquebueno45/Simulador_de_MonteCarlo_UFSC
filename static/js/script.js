@@ -112,6 +112,12 @@ function handleFormSubmit(e) {
     e.preventDefault();
     const variables = [];
     const functionInput = document.getElementById('function-input').value;
+    let numSimulations = parseInt(document.getElementById('num_simulations').value, 10);
+
+    // Garantir que o número de simulações não exceda 50.000
+    if (numSimulations > 50000) {
+        numSimulations = 50000;
+    }
 
     const rows = document.getElementById('variables-table').getElementsByTagName('tbody')[0].rows;
     for (let i = 0; i < rows.length; i++) {
@@ -152,7 +158,7 @@ function handleFormSubmit(e) {
         variables.push(variable);
     }
 
-    const data = { variables: variables, function: functionInput };
+    const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
     console.log('Dados enviados para o servidor:', JSON.stringify(data, null, 2));
 
     fetch('/', {

@@ -78,6 +78,7 @@ def index():
             app.logger.debug(f"Dados recebidos: {data}")
             variables = data['variables']
             function = data['function']
+            num_simulations = min(data.get('num_simulations', NUM_SIMULATIONS), 50000)
             
             generated_values = {}
             for var in variables:
@@ -87,7 +88,7 @@ def index():
                     params['fixed_value'] = params.get('fixed_value', params.get('value', 0))
                 elif distribution_type == 'triangular':
                     params['mid_point'] = params.get('mid_point', params.get('valor_medio', 0))
-                generated_values[var['id']] = generate_distribution(distribution_type, params).tolist()
+                generated_values[var['id']] = generate_distribution(distribution_type, params, num_simulations)
             
             app.logger.debug(f"Valores gerados: {generated_values}")
             app.logger.debug(f"Função a ser avaliada: {function}")
@@ -98,7 +99,7 @@ def index():
             
             response = {
                 'num_variables': len(variables),
-                'variables': generated_values,
+                'variables': {k: v if isinstance(v, (int, float)) else v.tolist() for k, v in generated_values.items()},
                 'values': result_values.tolist(),
                 'mean': float(np.mean(result_values)),
                 'std_dev': float(np.std(result_values))
