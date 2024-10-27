@@ -1,12 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
-import logging
 from datetime import datetime
 from scipy import stats
-import random
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 NUM_SIMULATIONS = 50000
 
