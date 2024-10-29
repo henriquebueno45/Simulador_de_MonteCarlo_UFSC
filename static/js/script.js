@@ -32,6 +32,7 @@ function addTableRow() {
     
     newRow.innerHTML = `
         <td class="variable-id">${variableId}</td>
+        <td><input type="text" class="form-control" name="variable_name" required></td>
         <td>
             <select class="form-control distribution-type" name="distribution_type" required>
                 <option value="">Selecione...</option>
@@ -42,7 +43,6 @@ function addTableRow() {
                 <option value="binary">Binária</option>
             </select>
         </td>
-        <td><input type="text" class="form-control" name="variable_name" required></td>
         <td colspan="3" class="parameters"></td>
         <td><button type="button" class="btn btn-danger btn-sm remove-row">Remover</button></td>
     `;
@@ -111,14 +111,14 @@ function updateParameterFields(selectElement) {
 function handleFormSubmit(e) {
     e.preventDefault();
     
-    // Mostrar a mensagem de progresso
+    // Definir a variável progressMessage no escopo correto
     const progressMessage = document.getElementById('progress-message');
     progressMessage.style.display = 'block';
     progressMessage.textContent = 'Realizando Simulação... 0%';
     
     const variables = [];
-    const functionInput = document.getElementById('function-input').value;
-    let numSimulations = parseInt(document.getElementById('num_simulations').value, 10);
+    const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1'); // Converte 'v' minúsculo para 'V' maiúsculo
+    let numSimulations = parseInt(document.getElementById('num_simulations').value.replace(',', '.'), 10);
 
     // Garantir que o número de simulações não exceda 50.000
     if (numSimulations > 50000) {
@@ -129,8 +129,8 @@ function handleFormSubmit(e) {
     for (let i = 0; i < rows.length; i++) {
         const cells = rows[i].cells;
         const variableId = cells[0].textContent;
-        const distributionType = cells[1].getElementsByTagName('select')[0].value;
-        const variableName = cells[2].getElementsByTagName('input')[0].value;
+        const variableName = cells[1].getElementsByTagName('input')[0].value;
+        const distributionType = cells[2].getElementsByTagName('select')[0].value;
         const parameters = cells[3].getElementsByTagName('input');
 
         let variable = {
@@ -141,20 +141,20 @@ function handleFormSubmit(e) {
 
         switch(distributionType) {
             case 'fixed':
-                variable.fixed_value = parseFloat(parameters[0].value);
+                variable.fixed_value = parseFloat(parameters[0].value.replace(',', '.'));
                 break;
             case 'normal':
-                variable.mean = parseFloat(parameters[0].value);
-                variable.std_dev = parseFloat(parameters[1].value);
+                variable.mean = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.std_dev = parseFloat(parameters[1].value.replace(',', '.'));
                 break;
             case 'uniform':
-                variable.min_value = parseFloat(parameters[0].value);
-                variable.max_value = parseFloat(parameters[1].value);
+                variable.min_value = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.max_value = parseFloat(parameters[1].value.replace(',', '.'));
                 break;
             case 'triangular':
-                variable.mid_point = parseFloat(parameters[0].value);
-                variable.min_value = parseFloat(parameters[1].value);
-                variable.max_value = parseFloat(parameters[2].value);
+                variable.mid_point = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.min_value = parseFloat(parameters[1].value.replace(',', '.'));
+                variable.max_value = parseFloat(parameters[2].value.replace(',', '.'));
                 break;
             case 'binary':
                 // Não precisa de parâmetros adicionais
@@ -174,7 +174,7 @@ function handleFormSubmit(e) {
             progress += 1; // Incrementar de forma constante
             progressMessage.textContent = `Realizando Simulação... ${progress}%`;
         }
-    }, 10); // Ajuste o tempo aqui para controlar a velocidade do progresso
+    }, 100); // Ajuste o tempo aqui para controlar a velocidade do progresso
 
     fetch('/', {
         method: 'POST',
