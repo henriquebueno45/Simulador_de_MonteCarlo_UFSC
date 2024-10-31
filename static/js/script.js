@@ -111,16 +111,14 @@ function updateParameterFields(selectElement) {
 function handleFormSubmit(e) {
     e.preventDefault();
     
-    // Definir a variável progressMessage no escopo correto
     const progressMessage = document.getElementById('progress-message');
     progressMessage.style.display = 'block';
     progressMessage.textContent = 'Realizando Simulação... 0%';
     
     const variables = [];
-    const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1'); // Converte 'v' minúsculo para 'V' maiúsculo
+    const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1');
     let numSimulations = parseInt(document.getElementById('num_simulations').value.replace(',', '.'), 10);
 
-    // Garantir que o número de simulações não exceda 50.000
     if (numSimulations > 50000) {
         numSimulations = 50000;
     }
@@ -167,14 +165,13 @@ function handleFormSubmit(e) {
     const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
     console.log('Dados enviados para o servidor:', JSON.stringify(data, null, 2));
 
-    // Simular progresso
     let progress = 0;
     const progressInterval = setInterval(() => {
         if (progress < 100) {
-            progress += 1; // Incrementar de forma constante
+            progress += 1;
             progressMessage.textContent = `Realizando Simulação... ${progress}%`;
         }
-    }, 100); // Ajuste o tempo aqui para controlar a velocidade do progresso
+    }, 100);
 
     fetch('/', {
         method: 'POST',
@@ -184,9 +181,9 @@ function handleFormSubmit(e) {
         body: JSON.stringify(data)
     })
     .then(response => {
-        clearInterval(progressInterval); // Parar o progresso simulado
+        clearInterval(progressInterval);
         if (!response.ok) {
-            progressMessage.style.display = 'none'; // Esconder a mensagem de progresso
+            progressMessage.style.display = 'none';
             return response.text().then(text => {
                 console.error('Resposta do servidor:', text);
                 throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
@@ -195,8 +192,8 @@ function handleFormSubmit(e) {
         return response.json();
     })
     .then(data => {
-        clearInterval(progressInterval); // Parar o progresso simulado
-        progressMessage.style.display = 'none'; // Esconder a mensagem de progresso
+        clearInterval(progressInterval);
+        progressMessage.style.display = 'none';
 
         console.log('Dados recebidos do servidor:', data);
         
@@ -210,11 +207,11 @@ function handleFormSubmit(e) {
             createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
             
-            // Criar botão para gerar PDF
             const generatePdfButton = document.createElement('button');
             generatePdfButton.textContent = 'Gerar Relatório PDF';
             generatePdfButton.className = 'btn btn-primary mt-3';
             generatePdfButton.addEventListener('click', function() {
+                console.log('Gerando PDF com dados:', data);
                 generatePDF(data);
             });
             document.getElementById('result').appendChild(generatePdfButton);
@@ -224,8 +221,8 @@ function handleFormSubmit(e) {
         }
     })
     .catch(error => {
-        clearInterval(progressInterval); // Parar o progresso simulado
-        progressMessage.style.display = 'none'; // Esconder a mensagem de progresso
+        clearInterval(progressInterval);
+        progressMessage.style.display = 'none';
         console.error('Erro ao processar a solicitação:', error);
         document.getElementById('result').innerHTML = `<p>Erro ao processar a solicitação: ${error.message}. Por favor, tente novamente.</p>`;
     });
@@ -455,23 +452,34 @@ async function generatePDF(data) {
     doc.text('Relatório de Simulação', 105, 15, null, null, 'center');
     
     let yPosition = 30;
+    let itemCounter = 0; // Contador para controlar o número de variáveis por página
+    
+    // Verifique se data.variables é um array
+    console.log('Tipo de data.variables:', typeof data.variables);
+    console.log('Conteúdo de data.variables:', data.variables);
+    
+    if (!Array.isArray(data.variables)) {
+        console.error("Erro: data.variables não é um array.");
+        return;
+    }
     
     // Informações das variáveis
-    for (let varId in data.variables) {
-        const varName = data.variables[varId].name || varId; // Usa o nome da variável se disponível, senão usa o ID
-        
-        // Verifica se há espaço suficiente na página atual, senão adiciona uma nova página
-        if (yPosition > 230) {
+    for (let variable of data.variables) {
+        if (itemCounter >= 2) {
             doc.addPage();
-            yPosition = 20;
+            yPosition = 30;
+            itemCounter = 0;
         }
+        
+        // Usa o nome da variável fornecido pelo usuário
+        const varName = variable.name || `Variável ${variable.id}`; 
         
         doc.setFontSize(14);
         doc.text(`Variável: ${varName}`, 20, yPosition);
         yPosition += 10;
         
         doc.setFontSize(10);
-        const stats = calculateCustomStatistics(data.variables[varId], data.variables[varId].distribution_type);
+        const stats = calculateCustomStatistics(variable.values, variable.distribution_type);
         for (let stat in stats) {
             doc.text(`${stat}: ${stats[stat]}`, 30, yPosition);
             yPosition += 7;
@@ -480,16 +488,17 @@ async function generatePDF(data) {
         // Criar e adicionar o gráfico
         const meanOrZero = stats['Valor Médio Real'] || stats['Média Real'] || 0;
         const stdDevOrZero = stats['Desvio Padrão Real'] || 0;
-        const chartImg = await createHistogramForPDF(data.variables[varId], meanOrZero, stdDevOrZero, `Histograma - ${varName}`);
+        const chartImg = await createHistogramForPDF(variable.values, meanOrZero, stdDevOrZero, `Histograma - ${varName}`);
         doc.addImage(chartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55); // Reduzido em 45%
         
         yPosition += 100 * 0.55 + 15; // Altura do gráfico reduzida + espaço extra
+        itemCounter++;
     }
     
-    // Resultado final
-    if (yPosition > 230) {
+    // Adicionar o resultado final
+    if (itemCounter >= 2) {
         doc.addPage();
-        yPosition = 20;
+        yPosition = 30;
     }
     
     doc.setFontSize(14);
@@ -579,8 +588,8 @@ function calculateStatistics(values) {
 function createHistogramForPDF(values, mean, stdDev, title) {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
-        canvas.width = 600;
-        canvas.height = 400;
+        canvas.width = 600;  // Reduzido de 800 para 600
+        canvas.height = 400; // Reduzido de 600 para 400
         const ctx = canvas.getContext('2d');
         
         const numBins = 50;

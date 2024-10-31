@@ -94,9 +94,15 @@ def index():
             
             app.logger.debug(f"Resultado da avaliação: {result_values}")
             
+            # Transformar generated_values em um array de objetos, incluindo o nome
+            variables_response = [
+                {'id': var['id'], 'name': var['name'], 'values': values.tolist()} 
+                for var, (var_id, values) in zip(variables, generated_values.items())
+            ]
+            
             response = {
                 'num_variables': len(variables),
-                'variables': {k: v if isinstance(v, (int, float)) else v.tolist() for k, v in generated_values.items()},
+                'variables': variables_response,  # Agora é um array de objetos com nomes
                 'values': result_values.tolist(),
                 'mean': float(np.mean(result_values)),
                 'std_dev': float(np.std(result_values))
