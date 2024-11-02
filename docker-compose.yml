@@ -3,6 +3,9 @@ version: '3'
 
 services:
   web:
-    build: '.'
+    build: .
     ports:
       - '3000:3000'
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=app.py # Substitua 'app.py' pelo nome do seu script principal Flask
