@@ -10,7 +10,9 @@
 <body>
     <header class="site-header mb-4">
         <div class="header-container d-flex justify-content-between align-items-center">
-            <img src="{{ url_for('static', filename='images/brasao_UFSC_horizontal_sombreado.png') }}" alt="Logo da Empresa" class="logo">
+            <a href="https://www.blumenau.ufsc.br"  rel="noopener noreferrer">
+                <img src="{{ url_for('static', filename='images/brasao_UFSC_horizontal_sombreado.png') }}" alt="Logo da Empresa" class="logo">
+            </a>
             <h1 class="company-name">Universidade Federal de Santa Catarina - Campus Blumenau</h1>
             <nav>
                 <ul class="nav">
@@ -27,8 +29,52 @@
 
     <div class="container">
         <h2>Sobre</h2>
-        <p>Bem-vindo à seção sobre o projeto de Simulação de Monte Carlo. Este projeto foi criado para...</p>
+        <p>Bem-vindo à seção sobre o projeto de Simulação de Monte Carlo. Este projeto foi totalmente desenvolvido por Henrique Bueno de Morais, sob orientação da profa. Selene Souza com o
+            objetivo de disponibilizar uma ferramenta de extremo valor para a comunidade universitária.
+        </p>
         <!-- Adicione mais detalhes sobre o projeto aqui -->
+    </div>
+
+    <h2 style="text-align:center">Our Team</h2>
+    <div class="row">
+      <div class="column">
+        <div class="card">
+          <img src="static\images\WIN_20240919_10_40_45_Pro.jpg" alt="Jane" style="width:100%">
+          <div class="container">
+            <h2>Jane Doe</h2>
+            <p class="title">CEO & Founder</p>
+            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+            <p>jane@example.com</p>
+            <p><button class="button">Contact</button></p>
+          </div>
+        </div>
+      </div>
+    
+      <div class="column">
+        <div class="card">
+          <img src="/w3images/team2.jpg" alt="Mike" style="width:100%">
+          <div class="container">
+            <h2>Mike Ross</h2>
+            <p class="title">Art Director</p>
+            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+            <p>mike@example.com</p>
+            <p><button class="button">Contact</button></p>
+          </div>
+        </div>
+      </div>
+    
+      <div class="column">
+        <div class="card">
+          <img src="/w3images/team3.jpg" alt="John" style="width:100%">
+          <div class="container">
+            <h2>John Doe</h2>
+            <p class="title">Designer</p>
+            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+            <p>john@example.com</p>
+            <p><button class="button">Contact</button></p>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>

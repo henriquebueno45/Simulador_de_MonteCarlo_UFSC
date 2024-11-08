@@ -13,13 +13,21 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Botão 'add-row' não encontrado");
     }
 
-    // Adicionar a primeira linha por padrão
     addTableRow();
 
     document.getElementById('distribution-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('interval-form').addEventListener('submit', handleIntervalCalculation);
 
-    // Adicionar evento para salvar o modelo
+    // Limita o número de simulações a 50.000 e informa ao usuário
+    const numSimulationsInput = document.getElementById('num_simulations');
+    numSimulationsInput.addEventListener('input', function() {
+        const maxSimulations = 50000;
+        if (this.value > maxSimulations) {
+            this.value = maxSimulations;
+            alert(`O número máximo de simulações permitido é ${maxSimulations}.`);
+        }
+    });
+
     const saveModelButton = document.getElementById('save-model-button');
     if (saveModelButton) {
         saveModelButton.addEventListener('click', function() {
@@ -28,27 +36,151 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error("Botão 'save-model-button' não encontrado");
     }
-});
 
-document.getElementById('load-model').addEventListener('click', function() {
-    const fileInput = document.getElementById('model-file');
-    const file = fileInput.files[0];
+    const loadModelButton = document.getElementById('load-model');
+    if (loadModelButton) {
+        loadModelButton.addEventListener('click', function() {
+            const fileInput = document.getElementById('model-file');
+            const file = fileInput.files[0];
 
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            try {
-                const modelData = JSON.parse(event.target.result);
-                loadModelToApplication(modelData);
-            } catch (error) {
-                alert('Erro ao ler o arquivo JSON: ' + error.message);
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const modelData = JSON.parse(event.target.result);
+                        loadModelToApplication(modelData);
+                    } catch (error) {
+                        alert('Erro ao ler o arquivo JSON: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                alert('Por favor, selecione um arquivo JSON para carregar.');
             }
-        };
-        reader.readAsText(file);
-    } else {
-        alert('Por favor, selecione um arquivo JSON para carregar.');
+        });
     }
 });
+
+// Continue com as outras funções existentes...
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const progressMessage = document.getElementById('progress-message');
+    progressMessage.style.display = 'block';
+    progressMessage.textContent = 'Realizando Simulação... 0%';
+
+    const variables = [];
+    const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1');
+    let numSimulations = parseInt(document.getElementById('num_simulations').value.replace(',', '.'), 10);
+
+    const rows = document.getElementById('variables-table').getElementsByTagName('tbody')[0].rows;
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].cells;
+        const variableId = cells[0].textContent;
+        const variableName = cells[1].getElementsByTagName('input')[0].value;
+        const distributionType = cells[2].getElementsByTagName('select')[0].value;
+
+        const parameters = cells[3].getElementsByTagName('input');
+        let variable = {
+            id: variableId,
+            name: variableName,
+            distribution_type: distributionType,
+            values: []
+        };
+
+        switch(distributionType) {
+            case 'fixed':
+                variable.fixed_value = parseFloat(parameters[0].value.replace(',', '.'));
+                break;
+            case 'normal':
+                variable.mean = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.std_dev = parseFloat(parameters[1].value.replace(',', '.'));
+                break;
+            case 'uniform':
+                variable.min_value = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.max_value = parseFloat(parameters[1].value.replace(',', '.'));
+                break;
+            case 'triangular':
+                variable.mid_point = parseFloat(parameters[0].value.replace(',', '.'));
+                variable.min_value = parseFloat(parameters[1].value.replace(',', '.'));
+                variable.max_value = parseFloat(parameters[2].value.replace(',', '.'));
+                break;
+            case 'binary':
+                // Não precisa de parâmetros adicionais
+                break;
+        }
+
+        variables.push(variable);
+    }
+
+    const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
+
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (progress < 100) {
+            progress += 1;
+            progressMessage.textContent = `Realizando Simulação... ${progress}%`;
+        }
+    }, 100);
+
+    fetch('/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        clearInterval(progressInterval);
+        if (!response.ok) {
+            progressMessage.style.display = 'none';
+            return response.text().then(text => {
+                console.error('Resposta do servidor:', text);
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        clearInterval(progressInterval);
+        progressMessage.style.display = 'none';
+
+        document.getElementById('result').innerHTML = `
+            <p><strong>Simulação concluída</strong></p>
+            <p>Número total de variáveis: ${data.num_variables}</p>
+        `;
+        
+        if (Array.isArray(data.values) && data.values.length > 0) {
+            generatedValues = data.values;
+            createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
+            document.getElementById('interval-calculator').style.display = 'block';
+            
+            const generatePdfButton = document.createElement('button');
+            generatePdfButton.textContent = 'Gerar Relatório PDF';
+            generatePdfButton.className = 'btn btn-primary mt-3';
+            generatePdfButton.addEventListener('click', function() {
+                generatePDF(data);
+            });
+            document.getElementById('result').appendChild(generatePdfButton);
+
+            const saveModelButton = document.createElement('button');
+            saveModelButton.textContent = 'Salvar Modelo';
+            saveModelButton.className = 'btn btn-secondary mt-3 ml-2';
+            saveModelButton.addEventListener('click', function() {
+                saveSimulationModel(data);
+            });
+            document.getElementById('result').appendChild(saveModelButton);
+        } else {
+            document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
+        }
+    })
+    .catch(error => {
+        clearInterval(progressInterval);
+        progressMessage.style.display = 'none';
+        document.getElementById('result').innerHTML = `<p>Erro ao processar a solicitação: ${error.message}. Por favor, tente novamente.</p>`;
+    });
+}
 
 function loadModelToApplication(modelData) {
     // Este é um exemplo de como você pode enviar os dados para o servidor
