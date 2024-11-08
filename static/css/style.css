@@ -12,7 +12,7 @@ body {
 }
 
 h1, h2 {
-    color: #007bff;
+    color: #11049b;
 }
 
 .company-name {
@@ -22,7 +22,7 @@ h1, h2 {
 }
 
 .page-title {
-    color: #007bff;
+    color: #11049b;
 }
 
 #result, #percentage-result {
@@ -37,7 +37,7 @@ h1, h2 {
 }
 
 .site-header {
-    background-color: #007bff;
+    background-color: #11049b;
     padding: 10px 0; /* Remova o padding lateral para alinhar à esquerda */
     color: #ffffff;
     margin-bottom: 20px;
@@ -57,4 +57,24 @@ h1, h2 {
     height: 60px;
     margin-right: 20px; /* Espaçamento entre o logo e o nome da empresa */
     margin-left: 0; /* Elimina qualquer margem esquerda */
+}
+
+/* Dentro do seu arquivo CSS, adicione estas regras */
+.nav-link {
+    color: #ffffff; /* Define a cor dos links como branco */
+    background-color: transparent; /* Fundo transparente por padrão */
+    border: 1px solid transparent; /* Para consistência de espaçamento */
+    transition: background-color 0.3s, color 0.3s; /* Adiciona transições suaves */
+}
+
+.nav-link:hover {
+    color: #11049b; /* Cor do texto ao passar o mouse */
+    background-color: #e9ecef; /* Cor de fundo ao passar o mouse */
+    border-color: #dee2e6; /* Mudança de borda opcional ao passar o mouse */
+}
+
+.nav-link.active {
+    color: #11049b; /* Cor do texto para o link ativo */
+    background-color: #ffffff; /* Fundo diferente para o link ativo */
+    border-radius: 5px; /* Arredondamento para o link ativo */
 }

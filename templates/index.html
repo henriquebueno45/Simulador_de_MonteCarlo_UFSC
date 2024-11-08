@@ -5,29 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulação de MonteCarlo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> <!-- Certifique-se de que o caminho está correto -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </head>
 <body>
-    <header class="site-header">
-        <div class="header-container">
+    <header class="site-header mb-4">
+        <div class="header-container d-flex justify-content-between align-items-center">
             <img src="{{ url_for('static', filename='images/brasao_UFSC_horizontal_sombreado.png') }}" alt="Logo da Empresa" class="logo">
             <h1 class="company-name">Universidade Federal de Santa Catarina - Campus Blumenau</h1>
+            <nav>
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a href="/" class="nav-link">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/about" class="nav-link">Sobre</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </header>
 
     <div class="container">
-        <!-- Resto do conteúdo da página -->
+        <!-- Conteúdo da Simulação -->
         <div class="d-flex justify-content-between align-items-center my-4">
             <h1>Simulação de MonteCarlo</h1>
             <div class="d-flex align-items-center">
-                <form id="upload-model-form" enctype="multipart/form-data">
-                    <input type="file" id="model-file" accept=".json" class="form-control mb-2">
-                    <button type="button" id="load-model" class="btn btn-secondary mb-3">Carregar Modelo</button>
-                </form>
                 <label for="num_simulations" class="form-label mb-0 me-2">Simulações:</label>
                 <input type="number" class="form-control" id="num_simulations" name="num_simulations" min="1" max="50000" value="10000" style="width: 120px;">
             </div>
