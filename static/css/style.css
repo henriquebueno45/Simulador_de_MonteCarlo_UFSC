@@ -1,5 +1,6 @@
 body {
     background-color: #f8f9fa;
+    margin: 0; /* Remove margem padrão do body */
 }
 
 .container {
@@ -14,6 +15,16 @@ h1, h2 {
     color: #007bff;
 }
 
+.company-name {
+    color: #ffffff;
+    font-size: 20px; /* Ajuste o tamanho da fonte aqui */
+    margin: 0;
+}
+
+.page-title {
+    color: #007bff;
+}
+
 #result, #percentage-result {
     background-color: #e9ecef;
     border-radius: 5px;
@@ -23,4 +34,27 @@ h1, h2 {
 #plot {
     border: 1px solid #dee2e6;
     border-radius: 5px;
+}
+
+.site-header {
+    background-color: #007bff;
+    padding: 10px 0; /* Remova o padding lateral para alinhar à esquerda */
+    color: #ffffff;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Alinha itens no início, à esquerda */
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Garante que o container ocupe toda a largura */
+    padding: 0 20px; /* Padding lateral para dar espaço em geral */
+}
+
+.logo {
+    height: 60px;
+    margin-right: 20px; /* Espaçamento entre o logo e o nome da empresa */
+    margin-left: 0; /* Elimina qualquer margem esquerda */
 }

@@ -18,7 +18,83 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('distribution-form').addEventListener('submit', handleFormSubmit);
     document.getElementById('interval-form').addEventListener('submit', handleIntervalCalculation);
+
+    // Adicionar evento para salvar o modelo
+    const saveModelButton = document.getElementById('save-model-button');
+    if (saveModelButton) {
+        saveModelButton.addEventListener('click', function() {
+            saveSimulationModel();
+        });
+    } else {
+        console.error("Botão 'save-model-button' não encontrado");
+    }
 });
+
+document.getElementById('load-model').addEventListener('click', function() {
+    const fileInput = document.getElementById('model-file');
+    const file = fileInput.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const modelData = JSON.parse(event.target.result);
+                loadModelToApplication(modelData);
+            } catch (error) {
+                alert('Erro ao ler o arquivo JSON: ' + error.message);
+            }
+        };
+        reader.readAsText(file);
+    } else {
+        alert('Por favor, selecione um arquivo JSON para carregar.');
+    }
+});
+
+function loadModelToApplication(modelData) {
+    // Este é um exemplo de como você pode enviar os dados para o servidor
+    fetch('/load_model', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(modelData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Manipula a resposta do servidor, preenchendo o formulário
+        console.log(data);
+        // Código para preencher o formulário com os dados recebidos
+        populateFormWithData(data);
+    })
+    .catch(error => {
+        console.error('Erro ao carregar o modelo:', error);
+    });
+}
+
+function populateFormWithData(data) {
+    // Preenche o formulário com os dados do modelo
+    const variablesTableBody = document.getElementById('variables-table').getElementsByTagName('tbody')[0];
+    variablesTableBody.innerHTML = ''; // Limpa as linhas existentes
+
+    data.variables.forEach(variable => {
+        const newRow = variablesTableBody.insertRow();
+        newRow.innerHTML = `
+            <td class="variable-id">${variable.id}</td>
+            <td><input type="text" class="form-control" name="variable_name" value="${variable.name}" required></td>
+            <td>
+                <select class="form-control distribution-type" name="distribution_type" required>
+                    <!-- Adicione as opções aqui, selecione a correta com base nos dados -->
+                </select>
+            </td>
+            <td colspan="3" class="parameters">
+                <!-- Preencher com os parâmetros da variável -->
+            </td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-row">Remover</button></td>
+        `;
+
+        // Adicione lógica para preencher os parâmetros e selecionar a distribuição
+    });
+}
 
 function addTableRow() {
     const variablesTable = document.getElementById('variables-table').getElementsByTagName('tbody')[0];
@@ -77,18 +153,21 @@ function updateParameterFields(selectElement) {
         case 'fixed':
             parametersCell.innerHTML = `
                 <input type="number" class="form-control" name="fixed_value" placeholder="Valor fixo" step="any" required>
+                <small class="form-text text-muted">Use ponto (.) como separador decimal.</small>
             `;
             break;
         case 'normal':
             parametersCell.innerHTML = `
                 <input type="number" class="form-control" name="mean" placeholder="Média" step="any" required>
                 <input type="number" class="form-control" name="std_dev" placeholder="Desvio padrão" step="any" required>
+                <small class="form-text text-muted">Use ponto (.) como separador decimal.</small>
             `;
             break;
         case 'uniform':
             parametersCell.innerHTML = `
                 <input type="number" class="form-control" name="min_value" placeholder="Valor mínimo" step="any" required>
                 <input type="number" class="form-control" name="max_value" placeholder="Valor máximo" step="any" required>
+                <small class="form-text text-muted">Use ponto (.) como separador decimal.</small>
             `;
             break;
         case 'triangular':
@@ -96,6 +175,7 @@ function updateParameterFields(selectElement) {
                 <input type="number" class="form-control" name="mid_point" placeholder="Valor médio" step="any" required>
                 <input type="number" class="form-control" name="min_value" placeholder="Valor mínimo" step="any" required>
                 <input type="number" class="form-control" name="max_value" placeholder="Valor máximo" step="any" required>
+                <small class="form-text text-muted">Use ponto (.) como separador decimal.</small>
             `;
             break;
         case 'binary':
@@ -114,7 +194,7 @@ function handleFormSubmit(e) {
     const progressMessage = document.getElementById('progress-message');
     progressMessage.style.display = 'block';
     progressMessage.textContent = 'Realizando Simulação... 0%';
-    
+
     const variables = [];
     const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1');
     let numSimulations = parseInt(document.getElementById('num_simulations').value.replace(',', '.'), 10);
@@ -129,12 +209,17 @@ function handleFormSubmit(e) {
         const variableId = cells[0].textContent;
         const variableName = cells[1].getElementsByTagName('input')[0].value;
         const distributionType = cells[2].getElementsByTagName('select')[0].value;
+        
+        // Adiciona console.log para debugar a coleta de distributionType
+        console.log(`Tipo de distribuição para ${variableId}: ${distributionType}`);
+
         const parameters = cells[3].getElementsByTagName('input');
 
         let variable = {
             id: variableId,
             name: variableName,
-            distribution_type: distributionType
+            distribution_type: distributionType, // Verifica se está coletando corretamente
+            values: []  // Placeholder para os valores que seriam gerados na simulação
         };
 
         switch(distributionType) {
@@ -163,6 +248,8 @@ function handleFormSubmit(e) {
     }
 
     const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
+    
+    // Log de debug para verificar dados antes de enviar
     console.log('Dados enviados para o servidor:', JSON.stringify(data, null, 2));
 
     let progress = 0;
@@ -207,6 +294,7 @@ function handleFormSubmit(e) {
             createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
             
+            // Adiciona o botão de "Gerar Relatório PDF"
             const generatePdfButton = document.createElement('button');
             generatePdfButton.textContent = 'Gerar Relatório PDF';
             generatePdfButton.className = 'btn btn-primary mt-3';
@@ -215,6 +303,15 @@ function handleFormSubmit(e) {
                 generatePDF(data);
             });
             document.getElementById('result').appendChild(generatePdfButton);
+
+            // Adiciona o botão de "Salvar Modelo"
+            const saveModelButton = document.createElement('button');
+            saveModelButton.textContent = 'Salvar Modelo';
+            saveModelButton.className = 'btn btn-secondary mt-3 ml-2';
+            saveModelButton.addEventListener('click', function() {
+                saveSimulationModel(data);
+            });
+            document.getElementById('result').appendChild(saveModelButton);
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
@@ -226,6 +323,39 @@ function handleFormSubmit(e) {
         console.error('Erro ao processar a solicitação:', error);
         document.getElementById('result').innerHTML = `<p>Erro ao processar a solicitação: ${error.message}. Por favor, tente novamente.</p>`;
     });
+}
+
+function saveSimulationModel(data) {
+    const currentDate = new Date().toLocaleString('pt-BR', { timeZone: 'UTC' });
+
+    let fileContent = `Simulação Montecarlo - Data ${currentDate}\n\n"variables":\n{`;
+
+    data.variables.forEach(variable => {
+        fileContent += `\n  "${variable.id}": {\n`;
+        fileContent += `    "name": "${variable.name}",\n`;
+        fileContent += `    "distribution": "${variable.distribution_type}",\n`;  
+        fileContent += `    "values": ${JSON.stringify(variable.values || [], null, 2)}\n`;
+        fileContent += `  },`;
+    });
+
+    // Remove a última vírgula e fecha o objeto de variáveis
+    fileContent = fileContent.slice(0, -1) + '\n},\n';
+
+    fileContent += `"results": {\n`;
+    fileContent += `  "values": ${JSON.stringify(data.values, null, 2)}\n`;
+    fileContent += `}\n`;
+
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'simulation_model.txt';
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function handleIntervalCalculation(e) {

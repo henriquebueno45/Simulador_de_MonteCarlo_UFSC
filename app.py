@@ -1,13 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 import numpy as np
-from datetime import datetime
 from scipy import stats
 
 app = Flask(__name__)
 
-NUM_SIMULATIONS = 50000
-
-def generate_distribution(distribution_type, params, num_values=NUM_SIMULATIONS):
+def generate_distribution(distribution_type, params, num_values):
     if distribution_type == 'fixed':
         return np.full(num_values, params['fixed_value'])
     elif distribution_type == 'normal':
@@ -21,14 +18,14 @@ def generate_distribution(distribution_type, params, num_values=NUM_SIMULATIONS)
     else:
         raise ValueError(f"Tipo de distribuição não suportado: {distribution_type}")
 
-def evaluate_function(function, variables):
+def evaluate_function(function, variables, num_simulations):
     if function.startswith('='):
         function = function[1:]
     
     numpy_variables = {}
     for var_id, var_values in variables.items():
         if isinstance(var_values, (int, float)):
-            numpy_variables[var_id] = np.full(NUM_SIMULATIONS, var_values)
+            numpy_variables[var_id] = np.full(num_simulations, var_values)
         else:
             numpy_variables[var_id] = np.array(var_values)
     
@@ -40,12 +37,12 @@ def evaluate_function(function, variables):
     try:
         result = eval(function, {"__builtins__": None}, local_dict)
         if isinstance(result, (int, float)):
-            return np.full(NUM_SIMULATIONS, result)
+            return np.full(num_simulations, result)
         elif isinstance(result, np.ndarray):
             if result.ndim == 0:  # scalar numpy value
-                return np.full(NUM_SIMULATIONS, result.item())
-            elif result.shape[0] != NUM_SIMULATIONS:
-                return np.tile(result, NUM_SIMULATIONS // result.shape[0] + 1)[:NUM_SIMULATIONS]
+                return np.full(num_simulations, result.item())
+            elif result.shape[0] != num_simulations:
+                return np.tile(result, num_simulations // result.shape[0] + 1)[:num_simulations]
             return result
         else:
             raise ValueError(f"Resultado inesperado: {type(result)}")
@@ -75,7 +72,7 @@ def index():
             app.logger.debug(f"Dados recebidos: {data}")
             variables = data['variables']
             function = data['function']
-            num_simulations = min(data.get('num_simulations', NUM_SIMULATIONS), 50000)
+            num_simulations = min(data.get('num_simulations', 50000), 50000)
             
             generated_values = {}
             for var in variables:
@@ -90,7 +87,7 @@ def index():
             app.logger.debug(f"Valores gerados: {generated_values}")
             app.logger.debug(f"Função a ser avaliada: {function}")
             
-            result_values = evaluate_function(function, generated_values)
+            result_values = evaluate_function(function, generated_values, num_simulations)
             
             app.logger.debug(f"Resultado da avaliação: {result_values}")
             
@@ -147,6 +144,16 @@ def calculate_percentage():
         })
     except Exception as e:
         app.logger.error(f"Erro ao calcular porcentagem: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/load_model', methods=['POST'])
+def load_model():
+    try:
+        model_data = request.json
+        # Aqui você pode manipular e transformar os dados para que sejam enviados de volta ao front-end
+        return jsonify(model_data)
+    except Exception as e:
+        app.logger.error(f"Erro ao carregar o modelo: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
