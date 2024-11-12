@@ -201,7 +201,7 @@ function updateParameterFields(selectElement) {
 
 function handleFormSubmit(e) {
     e.preventDefault();
-    
+
     const progressMessage = document.getElementById('progress-message');
     progressMessage.style.display = 'block';
     progressMessage.textContent = 'Realizando Simulação... 0%';
@@ -220,8 +220,7 @@ function handleFormSubmit(e) {
         const variableId = cells[0].textContent;
         const variableName = cells[1].getElementsByTagName('input')[0].value;
         const distributionType = cells[2].getElementsByTagName('select')[0].value;
-        
-        // Adiciona console.log para debugar a coleta de distributionType
+
         console.log(`Tipo de distribuição para ${variableId}: ${distributionType}`);
 
         const parameters = cells[3].getElementsByTagName('input');
@@ -229,8 +228,8 @@ function handleFormSubmit(e) {
         let variable = {
             id: variableId,
             name: variableName,
-            distribution_type: distributionType, // Verifica se está coletando corretamente
-            values: []  // Placeholder para os valores que seriam gerados na simulação
+            distribution_type: distributionType,
+            values: []
         };
 
         switch(distributionType) {
@@ -251,7 +250,6 @@ function handleFormSubmit(e) {
                 variable.max_value = parseFloat(parameters[2].value.replace(',', '.'));
                 break;
             case 'binary':
-                // Não precisa de parâmetros adicionais
                 break;
         }
 
@@ -259,8 +257,7 @@ function handleFormSubmit(e) {
     }
 
     const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
-    
-    // Log de debug para verificar dados antes de enviar
+
     console.log('Dados enviados para o servidor:', JSON.stringify(data, null, 2));
 
     let progress = 0;
@@ -294,35 +291,52 @@ function handleFormSubmit(e) {
         progressMessage.style.display = 'none';
 
         console.log('Dados recebidos do servidor:', data);
-        
+
         document.getElementById('result').innerHTML = `
             <p><strong>Simulação concluída</strong></p>
             <p>Número total de variáveis: ${data.num_variables}</p>
         `;
-        
+
         if (Array.isArray(data.values) && data.values.length > 0) {
             generatedValues = data.values;
             createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
-            
+
+            // Cria um contêiner flexível para os botões
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'd-flex justify-content-between align-items-start mt-3';
+
             // Adiciona o botão de "Gerar Relatório PDF"
             const generatePdfButton = document.createElement('button');
             generatePdfButton.textContent = 'Gerar Relatório PDF';
-            generatePdfButton.className = 'btn btn-primary mt-3';
+            generatePdfButton.className = 'btn btn-primary';
             generatePdfButton.addEventListener('click', function() {
                 console.log('Gerando PDF com dados:', data);
                 generatePDF(data);
             });
-            document.getElementById('result').appendChild(generatePdfButton);
+            buttonContainer.appendChild(generatePdfButton);
 
-            // Adiciona o botão de "Salvar Modelo"
+            // Cria um contêiner para o botão e sua mensagem
+            const saveModelContainer = document.createElement('div');
+            saveModelContainer.style.display = 'flex';
+            saveModelContainer.style.flexDirection = 'column'; // Alinha os itens verticalmente
+            saveModelContainer.style.alignItems = 'center'; // Centraliza horizontalmente
+
+            // Adiciona o botão de "Salvar Modelo" com ícone de download
             const saveModelButton = document.createElement('button');
-            saveModelButton.textContent = 'Salvar Modelo';
-            saveModelButton.className = 'btn btn-secondary mt-3 ml-2';
+            saveModelButton.className = 'btn btn-secondary';
+            saveModelButton.innerHTML = '<i class="fas fa-download"></i>';
+            saveModelButton.title = 'Salvar Modelo';
+
             saveModelButton.addEventListener('click', function() {
                 saveSimulationModel(data);
             });
-            document.getElementById('result').appendChild(saveModelButton);
+
+            saveModelContainer.appendChild(saveModelButton);
+
+            // Adiciona o contêiner do botão e texto ao contêiner flexível
+            buttonContainer.appendChild(saveModelContainer);
+            document.getElementById('result').appendChild(buttonContainer);
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
