@@ -61,127 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Continue com as outras funções existentes...
-
-function handleFormSubmit(e) {
-    e.preventDefault();
-    
-    const progressMessage = document.getElementById('progress-message');
-    progressMessage.style.display = 'block';
-    progressMessage.textContent = 'Realizando Simulação... 0%';
-
-    const variables = [];
-    const functionInput = document.getElementById('function-input').value.replace(/v(\d+)/g, 'V$1');
-    let numSimulations = parseInt(document.getElementById('num_simulations').value.replace(',', '.'), 10);
-
-    const rows = document.getElementById('variables-table').getElementsByTagName('tbody')[0].rows;
-    for (let i = 0; i < rows.length; i++) {
-        const cells = rows[i].cells;
-        const variableId = cells[0].textContent;
-        const variableName = cells[1].getElementsByTagName('input')[0].value;
-        const distributionType = cells[2].getElementsByTagName('select')[0].value;
-
-        const parameters = cells[3].getElementsByTagName('input');
-        let variable = {
-            id: variableId,
-            name: variableName,
-            distribution_type: distributionType,
-            values: []
-        };
-
-        switch(distributionType) {
-            case 'fixed':
-                variable.fixed_value = parseFloat(parameters[0].value.replace(',', '.'));
-                break;
-            case 'normal':
-                variable.mean = parseFloat(parameters[0].value.replace(',', '.'));
-                variable.std_dev = parseFloat(parameters[1].value.replace(',', '.'));
-                break;
-            case 'uniform':
-                variable.min_value = parseFloat(parameters[0].value.replace(',', '.'));
-                variable.max_value = parseFloat(parameters[1].value.replace(',', '.'));
-                break;
-            case 'triangular':
-                variable.mid_point = parseFloat(parameters[0].value.replace(',', '.'));
-                variable.min_value = parseFloat(parameters[1].value.replace(',', '.'));
-                variable.max_value = parseFloat(parameters[2].value.replace(',', '.'));
-                break;
-            case 'binary':
-                // Não precisa de parâmetros adicionais
-                break;
-        }
-
-        variables.push(variable);
-    }
-
-    const data = { variables: variables, function: functionInput, num_simulations: numSimulations };
-
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-        if (progress < 100) {
-            progress += 1;
-            progressMessage.textContent = `Realizando Simulação... ${progress}%`;
-        }
-    }, 100);
-
-    fetch('/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        clearInterval(progressInterval);
-        if (!response.ok) {
-            progressMessage.style.display = 'none';
-            return response.text().then(text => {
-                console.error('Resposta do servidor:', text);
-                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        clearInterval(progressInterval);
-        progressMessage.style.display = 'none';
-
-        document.getElementById('result').innerHTML = `
-            <p><strong>Simulação concluída</strong></p>
-            <p>Número total de variáveis: ${data.num_variables}</p>
-        `;
-        
-        if (Array.isArray(data.values) && data.values.length > 0) {
-            generatedValues = data.values;
-            createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
-            document.getElementById('interval-calculator').style.display = 'block';
-            
-            const generatePdfButton = document.createElement('button');
-            generatePdfButton.textContent = 'Gerar Relatório PDF';
-            generatePdfButton.className = 'btn btn-primary mt-3';
-            generatePdfButton.addEventListener('click', function() {
-                generatePDF(data);
-            });
-            document.getElementById('result').appendChild(generatePdfButton);
-
-            const saveModelButton = document.createElement('button');
-            saveModelButton.textContent = 'Salvar Modelo';
-            saveModelButton.className = 'btn btn-secondary mt-3 ml-2';
-            saveModelButton.addEventListener('click', function() {
-                saveSimulationModel(data);
-            });
-            document.getElementById('result').appendChild(saveModelButton);
-        } else {
-            document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
-        }
-    })
-    .catch(error => {
-        clearInterval(progressInterval);
-        progressMessage.style.display = 'none';
-        document.getElementById('result').innerHTML = `<p>Erro ao processar a solicitação: ${error.message}. Por favor, tente novamente.</p>`;
-    });
-}
-
 function loadModelToApplication(modelData) {
     // Este é um exemplo de como você pode enviar os dados para o servidor
     fetch('/load_model', {
@@ -706,79 +585,107 @@ function createHistogramForPDF(values, mean, stdDev, title) {
     });
 }
 
+async function getBase64FromUrl(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
 async function generatePDF(data) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text('Relatório de Simulação', 105, 15, null, null, 'center');
-    
-    let yPosition = 30;
-    let itemCounter = 0; // Contador para controlar o número de variáveis por página
-    
+
+    // Carregar o logo (substitua pela URL correta do logo)
+    const logoImg = await getBase64FromUrl('/static/images/brasao_UFSC_horizontal_sombreado.png');
+
+    function addHeader(doc) {
+        // Cor do fundo do cabeçalho
+        doc.setFillColor(17, 4, 155); // Azul escuro
+        doc.rect(0, 0, doc.internal.pageSize.width, 20, 'F'); // Retângulo de fundo para o cabeçalho
+
+        // Adicionar imagem do logo com proporções corretas
+        const logoWidth = 40; // Define a largura desejada no PDF
+        const logoHeight = logoWidth / 4.47; // Calcula a altura mantendo a proporção original
+        const logoY = 10 - (logoHeight / 2); // Ajuste para centralizar verticalmente com o texto
+        doc.addImage(logoImg, 'PNG', 5, logoY, logoWidth, logoHeight); // Ajusta a posição para alinhar ao texto
+
+        // Nome da empresa centralizado
+        doc.setFontSize(16);
+        doc.setTextColor(255, 255, 255); // Cor do texto em branco
+        const headerText = 'Relatório de Simulação de MonterCarlo';
+        const textWidth = doc.getTextWidth(headerText);
+        const pageWidth = doc.internal.pageSize.width;
+        const textX = (pageWidth - textWidth + (logoWidth/2)) / 2; // Calcula a posição x para centralizar o texto
+        doc.text(headerText, textX, 12);
+    }
+
+    // Adicionar o cabeçalho na primeira página
+    addHeader(doc);
+
+    let yPosition = 40;
+    let itemCounter = 0;
+
     // Verifique se data.variables é um array
-    console.log('Tipo de data.variables:', typeof data.variables);
-    console.log('Conteúdo de data.variables:', data.variables);
-    
     if (!Array.isArray(data.variables)) {
         console.error("Erro: data.variables não é um array.");
         return;
     }
-    
-    // Informações das variáveis
+
     for (let variable of data.variables) {
         if (itemCounter >= 2) {
             doc.addPage();
-            yPosition = 30;
+            addHeader(doc); // Adicionar cabeçalho nas páginas adicionais
+            yPosition = 40;
             itemCounter = 0;
         }
-        
-        // Usa o nome da variável fornecido pelo usuário
-        const varName = variable.name || `Variável ${variable.id}`; 
-        
+
+        const varName = variable.name || `Variável ${variable.id}`;
         doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0); // Cor do texto preto para o corpo
         doc.text(`Variável: ${varName}`, 20, yPosition);
         yPosition += 10;
-        
+
         doc.setFontSize(10);
         const stats = calculateCustomStatistics(variable.values, variable.distribution_type);
         for (let stat in stats) {
             doc.text(`${stat}: ${stats[stat]}`, 30, yPosition);
             yPosition += 7;
         }
-        
-        // Criar e adicionar o gráfico
+
         const meanOrZero = stats['Valor Médio Real'] || stats['Média Real'] || 0;
         const stdDevOrZero = stats['Desvio Padrão Real'] || 0;
         const chartImg = await createHistogramForPDF(variable.values, meanOrZero, stdDevOrZero, `Histograma - ${varName}`);
-        doc.addImage(chartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55); // Reduzido em 45%
-        
-        yPosition += 100 * 0.55 + 15; // Altura do gráfico reduzida + espaço extra
+        doc.addImage(chartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55);
+
+        yPosition += 100 * 0.55 + 15;
         itemCounter++;
     }
-    
-    // Adicionar o resultado final
+
     if (itemCounter >= 2) {
         doc.addPage();
+        addHeader(doc);
         yPosition = 30;
     }
-    
+
     doc.setFontSize(14);
     doc.text('Resultado Final', 20, yPosition);
     yPosition += 10;
-    
+
     doc.setFontSize(10);
     const finalStats = calculateStatistics(data.values);
     for (let stat in finalStats) {
         doc.text(`${stat}: ${finalStats[stat].toFixed(4)}`, 30, yPosition);
         yPosition += 7;
     }
-    
-    // Criar e adicionar o gráfico do resultado final
+
     const finalChartImg = await createHistogramForPDF(data.values, finalStats['Média'], finalStats['Desvio Padrão'], 'Histograma - Resultado Final');
-    doc.addImage(finalChartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55); // Reduzido em 45%
-    
-    // Salvar o PDF
+    doc.addImage(finalChartImg, 'PNG', 20, yPosition, 170 * 0.55, 100 * 0.55);
+
     doc.save('relatorio_simulacao.pdf');
 }
 
@@ -833,20 +740,8 @@ function calculateCustomStatistics(values, distributionType) {
     }
 }
 
-function calculateStatistics(values) {
-    const mean = values.reduce((a, b) => a + b) / values.length;
-    const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
-    const stdDev = Math.sqrt(variance);
-    
-    return {
-        'Média': mean,
-        'Desvio Padrão': stdDev,
-        'Mínimo': Math.min(...values),
-        'Máximo': Math.max(...values)
-    };
-}
 
-// Nova função createHistogramForPDF (adicione após generatePDF)
+
 function createHistogramForPDF(values, mean, stdDev, title) {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
