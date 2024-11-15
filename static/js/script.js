@@ -615,7 +615,7 @@ async function generatePDF(data) {
     const doc = new jsPDF();
 
     // Carregar o logo (substitua pela URL correta do logo)
-    const logoImg = await getBase64FromUrl('/static/images/brasao_UFSC_horizontal_sombreado.png');
+    const logoImg = await getBase64FromUrl('static/images/brasao_UFSC_horizontal_sombreado.png');
 
     function addHeader(doc) {
         // Cor do fundo do cabeçalho
@@ -623,7 +623,7 @@ async function generatePDF(data) {
         doc.rect(0, 0, doc.internal.pageSize.width, 20, 'F'); // Retângulo de fundo para o cabeçalho
 
         // Adicionar imagem do logo com proporções corretas
-        const logoWidth = 40; // Define a largura desejada no PDF
+        const logoWidth = 60; // Define a largura desejada no PDF
         const logoHeight = logoWidth / 4.47; // Calcula a altura mantendo a proporção original
         const logoY = 10 - (logoHeight / 2); // Ajuste para centralizar verticalmente com o texto
         doc.addImage(logoImg, 'PNG', 5, logoY, logoWidth, logoHeight); // Ajusta a posição para alinhar ao texto
