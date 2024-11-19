@@ -85,7 +85,7 @@ def index():
                 generated_values[var['id']] = generate_distribution(distribution_type, params, num_simulations)
             
             app.logger.debug(f"Valores gerados: {generated_values}")
-            app.logger.debug(f"Função a ser avaliada: {function}")
+            app.logger.debug(f"Função a ser evaliada: {function}")
             
             result_values = evaluate_function(function, generated_values, num_simulations)
             
@@ -159,6 +159,11 @@ def load_model():
     except Exception as e:
         app.logger.error(f"Erro ao carregar o modelo: {str(e)}")
         return jsonify({'error': str(e)}), 400
+
+@app.route('/exemplos', methods=['GET'])
+def exemplos():
+    # Esta rota pode ser usada no futuro para servir uma página de exemplos separada ou mantê-la como está.
+    return render_template('exemplos.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

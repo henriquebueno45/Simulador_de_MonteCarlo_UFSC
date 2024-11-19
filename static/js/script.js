@@ -26,6 +26,15 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = maxSimulations;
             alert(`O número máximo de simulações permitido é ${maxSimulations}.`);
         }
+
+    const exampleLink = document.querySelector('a[href="/exemplos"]');
+    if (exampleLink) {
+        exampleLink.addEventListener('click', function(event) {
+            event.preventDefault();
+            const exampleModal = new bootstrap.Modal(document.getElementById('exampleModal'));
+            exampleModal.show();
+        });
+    }
     });
 
     const saveModelButton = document.getElementById('save-model-button');
@@ -631,7 +640,7 @@ async function generatePDF(data) {
         // Nome da empresa centralizado
         doc.setFontSize(16);
         doc.setTextColor(255, 255, 255); // Cor do texto em branco
-        const headerText = 'Relatório de Simulação de MonterCarlo';
+        const headerText = 'Relatório de Simulação de MonteCarlo';
         const textWidth = doc.getTextWidth(headerText);
         const pageWidth = doc.internal.pageSize.width;
         const textX = (pageWidth - textWidth + (logoWidth/2)) / 2; // Calcula a posição x para centralizar o texto
