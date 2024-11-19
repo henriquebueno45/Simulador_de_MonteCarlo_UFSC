@@ -14,7 +14,7 @@ def generate_distribution(distribution_type, params, num_values):
     elif distribution_type == 'triangular':
         return np.random.triangular(params['min_value'], params['mid_point'], params['max_value'], num_values)
     elif distribution_type == 'binary':
-        return np.random.choice([0, 1], size=num_values)
+        return np.random.choice([params['binary_value'] * 0, params['binary_value'] * 1], size=num_values)
     else:
         raise ValueError(f"Tipo de distribuição não suportado: {distribution_type}")
 

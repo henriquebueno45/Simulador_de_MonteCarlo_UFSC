@@ -125,7 +125,7 @@ function addTableRow() {
 
     const newRow = variablesTable.insertRow();
     const variableId = `V${variablesTable.rows.length}`;
-    
+
     newRow.innerHTML = `
         <td class="variable-id">${variableId}</td>
         <td><input type="text" class="form-control" name="variable_name" required></td>
@@ -200,7 +200,8 @@ function updateParameterFields(selectElement) {
             break;
         case 'binary':
             parametersCell.innerHTML = `
-                <p>Distribuição binária (0 ou 1)</p>
+                <input type="number" class="form-control" name="binary_value" placeholder="Valor binário" step="any" required>
+                <small class="form-text text-muted">Este valor será multiplicado pelo vetor binário.</small>
             `;
             break;
         default:
@@ -230,8 +231,6 @@ function handleFormSubmit(e) {
         const variableName = cells[1].getElementsByTagName('input')[0].value;
         const distributionType = cells[2].getElementsByTagName('select')[0].value;
 
-        console.log(`Tipo de distribuição para ${variableId}: ${distributionType}`);
-
         const parameters = cells[3].getElementsByTagName('input');
 
         let variable = {
@@ -259,6 +258,7 @@ function handleFormSubmit(e) {
                 variable.max_value = parseFloat(parameters[2].value.replace(',', '.'));
                 break;
             case 'binary':
+                variable.binary_value = parseFloat(parameters[0].value.replace(',', '.'));
                 break;
         }
 
@@ -310,42 +310,6 @@ function handleFormSubmit(e) {
             generatedValues = data.values;
             createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
-
-            // Cria um contêiner flexível para os botões
-            const buttonContainer = document.createElement('div');
-            buttonContainer.className = 'd-flex justify-content-between align-items-start mt-3';
-
-            // Adiciona o botão de "Gerar Relatório PDF"
-            const generatePdfButton = document.createElement('button');
-            generatePdfButton.textContent = 'Gerar Relatório PDF';
-            generatePdfButton.className = 'btn btn-primary';
-            generatePdfButton.addEventListener('click', function() {
-                console.log('Gerando PDF com dados:', data);
-                generatePDF(data);
-            });
-            buttonContainer.appendChild(generatePdfButton);
-
-            // Cria um contêiner para o botão e sua mensagem
-            const saveModelContainer = document.createElement('div');
-            saveModelContainer.style.display = 'flex';
-            saveModelContainer.style.flexDirection = 'column'; // Alinha os itens verticalmente
-            saveModelContainer.style.alignItems = 'center'; // Centraliza horizontalmente
-
-            // Adiciona o botão de "Salvar Modelo" com ícone de download
-            const saveModelButton = document.createElement('button');
-            saveModelButton.className = 'btn btn-secondary';
-            saveModelButton.innerHTML = '<i class="fas fa-download"></i>';
-            saveModelButton.title = 'Salvar Modelo';
-
-            saveModelButton.addEventListener('click', function() {
-                saveSimulationModel(data);
-            });
-
-            saveModelContainer.appendChild(saveModelButton);
-
-            // Adiciona o contêiner do botão e texto ao contêiner flexível
-            buttonContainer.appendChild(saveModelContainer);
-            document.getElementById('result').appendChild(buttonContainer);
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
