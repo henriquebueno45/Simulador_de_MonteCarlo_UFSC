@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Aumenta a especificidade do seletor */
         .example-section img.example-image {
             max-width: 50% !important;
             height: auto !important;
@@ -43,30 +42,57 @@
     <div class="container">
         <h2 class="my-4">Exemplos de Uso do Simulador de Monte Carlo</h2>
         <p>Bem-vindo à página de exemplos do simulador de Monte Carlo. Aqui você encontrará instruções e imagens ilustrativas sobre como configurar seu modelo e analisar os resultados.</p>
+        
         <section class="example-section mt-5">
-            <h3>Enunciado do problema</h3>
-            <p>Texto do enunciado do problema</p>
+            <h3>Enunciado do Problema</h3>
+            <p>Uma empresa está lançando um novo produto no mercado e quer prever o lucro trimestral esperado. Para isso, a empresa identificou quatro variáveis principais que afetam o lucro:</p>
+            <ul>
+                <li><strong>Preço de Venda por Unidade</strong>: Varia normalmente devido a descontos e promoções, com uma média de R$ 150,00 e desvio padrão de R$ 10,00.</li>
+                <li><strong>Custo de Produção por Unidade</strong>: Flutuações nos preços dos materiais, variando uniformemente de R$ 90,00 a R$ 110,00.</li>
+                <li><strong>Quantidade Vendida</strong>: Depende da demanda, modelada por uma distribuição triangular com ponto médio de 500 unidades e variando entre 300 a 800 unidades.</li>
+                <li><strong>Desconto Binário por Volume</strong>: Aplicado de tempos em tempos, reduzindo em R$5,00 por unidade vendida.</li>
+            </ul>
+        </section>
+
         <section class="example-section mt-5">
             <h3>Passo 1: Definição das Variáveis</h3>
-            <p>Comece por definir suas variáveis no simulador. Cada variável pode ter diferentes tipos de distribuição, como valor fixo, normal, uniforme, triangular ou binária. Certifique-se de preencher todos os parâmetros necessários conforme a distribuição escolhida.</p>
-            <img src="{{ url_for('static', filename='images/example1.jpg') }}" alt="Exemplo de Definição de Variáveis" class="img-fluid my-3 example-image">>
+            <p>Comece por definir suas variáveis no simulador. Cada variável pode ter diferentes tipos de distribuição. Para o nosso exemplo:</p>
+            <ul>
+                <li>Defina o <strong>Preço de Venda</strong> como uma distribuição normal.</li>
+                <li>Defina o <strong>Custo de Produção</strong> como uma distribuição uniforme.</li>
+                <li>Defina a <strong>Quantidade Vendida</strong> como uma distribuição triangular.</li>
+                <li>Adicione um <strong>Desconto Binário</strong> para aplicar o desconto ocasionalmente.</li>
+            </ul>
+            <img src="{{ url_for('static', filename='images/exemploVariables1.png') }}" alt="Exemplo de Definição de Variáveis" class="img-fluid my-3 example-image">
         </section>
 
         <section class="example-section mt-5">
             <h3>Passo 2: Configuração da Função para Simulação</h3>
-            <p>Insira a função que será utilizada para calcular os resultados da simulação. A função deve ser escrita usando as variáveis definidas no passo anterior. Por exemplo, para calcular o produto de V1, V2 e V3 subtraído de V4, você deve escrever: <code>=V1*V2*V3-V4</code>.</p>
-            <img src="{{ url_for('static', filename='images/example1.jpg') }}" alt="Exemplo de Configuração de Função" class="img-fluid my-3 example-image">>
+            <p>Insira a função que será utilizada para calcular os resultados da simulação. No nosso exemplo, a função para calcular o lucro trimestral é:</p>
+            <p><code>Lucro = (Preço de Venda - Custo de Produção) * Quantidade Vendida - (Desconto Binário * Quantidade Vendida)</code>. Inserindo no simulador, tem-se:</p>
+            <p><code>=((V1 - V2) * V3) - V4*V3</code></p>
+            <img src="{{ url_for('static', filename='images/exemploFunction2.png') }}" alt="Exemplo de Configuração de Função" class="img-fluid my-3 example-image">
         </section>
 
         <section class="example-section mt-5">
             <h3>Passo 3: Executar a Simulação e Analisar os Resultados</h3>
             <p>Depois de configurar suas variáveis e função, execute a simulação. O simulador irá gerar resultados baseados nas distribuições e função definida. Você poderá visualizar os resultados em forma de gráficos e relatórios detalhados.</p>
-            <img src="{{ url_for('static', filename='images/example1.jpg') }}" alt="Exemplo de Resultados da Simulação" class="img-fluid my-3 example-image">>
+            <img src="{{ url_for('static', filename='images/exemploGraph3.png') }}" alt="Exemplo de Resultados da Simulação" class="img-fluid my-3 example-image">
         </section>
 
-        <footer class="mt-5">
-            <p class="text-center">Para mais informações, visite nossa <a href="/about">página sobre</a> ou entre em contato.</p>
-        </footer>
+        <section class="example-section mt-5">
+            <h3>Passo 4: Análise dos Resultados</h3>
+            <p>A análise dos resultados da simulação de Monte Carlo nos fornece insights valiosos sobre o potencial desempenho financeiro do novo produto. Aqui estão algumas etapas e métricas importantes para considerar ao revisar os resultados:</p>
+            <ul>
+                <li><strong>Histograma de Lucros</strong>: Este gráfico mostra a distribuição de lucros obtidos em todas as simulações. Observamos a frequência de diferentes níveis de lucro, identificando o lucro mais provável e a amplitude dos resultados.</li>
+                <li><strong>Média e Desvio Padrão</strong>: A média dá uma noção do lucro esperado, enquanto o desvio padrão indica a variabilidade dos resultados. Um desvio padrão alto sugere maior incerteza nos lucros previstos.</li>
+                <li><strong>Faixas percentuais</strong>: Ao analisar o gráfico, pode-se utilizar a Calculadora de Intervalo para descobrir a porcentagem de certeza em que o lucro ficará dentro da faixa desejada!</li>
+                <li><strong>Impacto do Desconto Binário</strong>: Avalie como o desconto aplicado ocasionalmente afeta os resultados. Compare cenários com e sem desconto para entender seu impacto no lucro.</li>
+            </ul>
+            <p>Com esses dados, a empresa pode ajustar suas estratégias de preço, produção e marketing para otimizar o lucro, enquanto identifica e mitiga riscos potenciais.</p>
+            <img src="{{ url_for('static', filename='images/exemploGraphCalc5.png') }}" alt="Gráfico marcado" class="img-fluid my-3 example-image">
+            <img src="{{ url_for('static', filename='images/exemploCalculator4.png') }}" alt="Calculadora de Intervalo" class="img-fluid my-3 example-image">
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
