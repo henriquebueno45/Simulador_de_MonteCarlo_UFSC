@@ -6,11 +6,16 @@
     <title>Sobre o Projeto</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .about-simulation p {
+            text-indent: 50px;
+        }
+    </style>
 </head>
 <body>
     <header class="site-header mb-4">
         <div class="header-container d-flex justify-content-between align-items-center">
-            <a href="https://www.blumenau.ufsc.br"  rel="noopener noreferrer">
+            <a href="https://www.blumenau.ufsc.br" rel="noopener noreferrer">
                 <img src="{{ url_for('static', filename='images/brasao_UFSC_horizontal_sombreado.png') }}" alt="Logo da Empresa" class="logo">
             </a>
             <h1 class="company-name">Universidade Federal de Santa Catarina - Campus Blumenau</h1>
@@ -30,54 +35,47 @@
         </div>
     </header>
 
-    <div class="container">
-        <h2>Sobre</h2>
-        <p>Bem-vindo à seção sobre o projeto de Simulação de Monte Carlo. Este projeto foi totalmente desenvolvido por Henrique Bueno de Morais, sob orientação da profa. Selene Souza com o
-            objetivo de disponibilizar uma ferramenta de extremo valor para a comunidade universitária.
-        </p>
-        <!-- Adicione mais detalhes sobre o projeto aqui -->
+    <div class="container about-simulation">
+        <h2>Sobre a Simulação de Monte Carlo</h2>
+        <p>A Simulação de Monte Carlo (SMC) é uma técnica que utiliza números aleatórios e probabilidades para analisar problemas complexos, sendo especialmente útil em situações de risco e incerteza. O conceito surgiu durante a Segunda Guerra Mundial no Projeto Manhattan, no laboratório de Los Alamos, EUA, sendo desenvolvido pelos cientistas John Von Neumann e Stanislaw Ulam. O nome "Monte Carlo" foi escolhido em referência aos jogos de azar, comuns no cassino da cidade de Monte Carlo, em Mônaco, que dependem de sorteios e resultados aleatórios (Metropolis & Ulam, 1949; Metropolis, 1987).</p>
+
+        <p>A SMC funciona gerando números aleatórios para atribuir valores às variáveis de um sistema que está sendo analisado. Esses números podem ser obtidos por diversos meios, como tabelas, sorteios, roletas ou, atualmente, por meio de softwares específicos. Cada repetição da simulação gera um novo valor, e ao final, os resultados obtidos formam uma distribuição de frequências. Essa distribuição permite o cálculo de estatísticas como a média, o valor mínimo e máximo, o desvio padrão, e ainda possibilita a criação de cenários futuros para a análise do comportamento do sistema.</p>
+          
+        <p>Este método é extremamente valioso quando lidamos com problemas que envolvem variáveis imprevisíveis, ou seja, situações em que o comportamento das variáveis não é determinístico. A SMC tem aplicação em diversas áreas, como finanças, engenharia e planejamento, ajudando a antecipar os efeitos de diferentes cenários e proporcionando uma base sólida para decisões informadas (Moore & Weatherford, 2001; Lustosa, Ponte & Dominas, 2004).</p>
+          
+        <p>Para executar corretamente uma simulação de Monte Carlo, é importante seguir algumas etapas básicas. Um dos pontos chave é realizar o maior número possível de simulações para garantir uma amostra representativa, sendo recomendado pelo menos cem repetições. Embora não exista um limite máximo, é crucial equilibrar a precisão dos resultados com o tempo de processamento, ajustando a quantidade de simulações conforme o poder computacional disponível (Escudero, 1973).</p>
+          
+        <p>Com nosso simulador de Monte Carlo, você poderá explorar essa técnica para enfrentar desafios envolvendo incertezas, realizar análises detalhadas e gerar insights valiosos para suas decisões estratégicas.</p>
     </div>
 
-    <h2 style="text-align:center">Our Team</h2>
-    <div class="row">
-      <div class="column">
-        <div class="card">
-          <img src="static\images\WIN_20240919_10_40_45_Pro.jpg" alt="Jane" style="width:100%">
-          <div class="container">
-            <h2>Jane Doe</h2>
-            <p class="title">CEO & Founder</p>
-            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-            <p>jane@example.com</p>
-            <p><button class="button">Contact</button></p>
-          </div>
+    <div class="container">
+        <h2>Equipe</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-4">
+                <div class="card">
+                    <img src="{{ url_for('static', filename='images/WIN_20240919_10_40_45_Pro.jpg') }}" alt="Henrique Bueno de Morais" style="width:100%">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Henrique Bueno de Morais</h5>
+                        <p class="card-text">Desenvolvedor FullStack</p>
+                        <p>Graduando de Engenharia de Controle e Automação na UFSC Blumenau</p>
+                        <p>henriquebueno75@gmail.com</p>
+                        <a href="mailto:henriquebueno75@gmail.com" class="btn btn-primary">Contact</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <img src="{{ url_for('static', filename='images/WIN_20240919_10_40_45_Pro.jpg') }}" alt="Mike Ross" style="width:100%">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Mike Ross</h5>
+                        <p class="card-text">Art Director</p>
+                        <p>Some text that describes me lorem ipsum ipsum lorem.</p>
+                        <p>example@example.com</p>
+                        <a href="mailto:example@example.com" class="btn btn-primary">Contact</a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    
-      <div class="column">
-        <div class="card">
-          <img src="/w3images/team2.jpg" alt="Mike" style="width:100%">
-          <div class="container">
-            <h2>Mike Ross</h2>
-            <p class="title">Art Director</p>
-            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-            <p>mike@example.com</p>
-            <p><button class="button">Contact</button></p>
-          </div>
-        </div>
-      </div>
-    
-      <div class="column">
-        <div class="card">
-          <img src="/w3images/team3.jpg" alt="John" style="width:100%">
-          <div class="container">
-            <h2>John Doe</h2>
-            <p class="title">Designer</p>
-            <p>Some text that describes me lorem ipsum ipsum lorem.</p>
-            <p>john@example.com</p>
-            <p><button class="button">Contact</button></p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
