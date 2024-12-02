@@ -136,7 +136,7 @@ function addTableRow() {
                 <option value="normal">Normal</option>
                 <option value="uniform">Uniforme</option>
                 <option value="triangular">Triangular</option>
-                <option value="binary">Binária</option>
+                <option value="binary">Binária (sim ou não)</option>
             </select>
         </td>
         <td colspan="3" class="parameters"></td>
