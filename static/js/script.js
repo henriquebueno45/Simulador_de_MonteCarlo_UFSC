@@ -358,8 +358,10 @@ function saveSimulationModel(data) {
 
 function handleIntervalCalculation(e) {
     e.preventDefault();
-    let minVal = document.getElementById('min_val').value.toLowerCase();
-    let maxVal = document.getElementById('max_val').value.toLowerCase();
+    // Substitui , por ponto
+
+    let minVal = document.getElementById('min_val').value.toLowerCase().replace(/,/g, ".");
+    let maxVal = document.getElementById('max_val').value.toLowerCase().replace(/,/g, ".");
 
     fetch('/calculate_percentage', {
         method: 'POST',
