@@ -87,6 +87,7 @@
                 <h3>Passo 3: Executar a Simulação e Analisar os Resultados</h3>
                 <p>Depois de configurar suas variáveis e função, execute a simulação. O simulador irá gerar resultados baseados nas distribuições e função definida. Você poderá visualizar os resultados em forma de gráficos e relatórios detalhados.</p>
                 <img src="{{ url_for('static', filename='images/exemploGraph3.png') }}" alt="Exemplo de Resultados da Simulação" class="img-fluid my-3 example-image">
+                <p style="color: crimson;"> ATENÇÃO: Lembre-se sempre de baixar o PDF do simulador para ter acesso aos resultados detalhados!!</p>
             </section>
 
             <section class="example-section mt-5">
@@ -140,27 +141,22 @@
 
             <section class="example-section mt-5">
                 <h3>Passo 3: Executar a Simulação e Analisar os Resultados</h3>
-                <p>Depois de configurar as variáveis e função, execute a simulação. Observações típicas podem incluir:</p>
-                <ul>
-                    <li><strong>Tempo Médio do Projeto</strong>: A média do tempo total necessário para completar o projeto.</li>
-                    <li><strong>Distribuição dos Tempos</strong>: Um histograma mostrando a distribuição dos tempos totais do projeto.</li>
-                    <li><strong>Cenários de Risco</strong>: Identificação de cenários em que o tempo total excede um determinado limite crítico.</li>
-                </ul>
+                <p>Depois de configurar suas variáveis e função, execute a simulação. O simulador irá gerar resultados baseados nas distribuições e função definida. Você poderá visualizar os resultados em forma de gráficos e relatórios detalhados.</p>
                 <img src="{{ url_for('static', filename='images/exemploTempo3.png') }}" alt="Exemplo de Resultados da Simulação" class="img-fluid my-3 example-image">
-                <p>ATENÇÃO: Lembre-se sempre de baixar o PDF do simulador para ter acesso aos resultados detalhados!!</p>
-                <img src="{{ url_for('static', filename='images/exemploTempo5.png') }}" alt="Botão de download" class="img-fluid my-3 example-image">
+                <p style="color: crimson;"> ATENÇÃO: Lembre-se sempre de baixar o PDF do simulador para ter acesso aos resultados detalhados!!</p>
             </section>
 
             <section class="example-section mt-5">
                 <h3>Passo 4: Análise dos Resultados</h3>
-                <p>A análise dos resultados ajudará a entender:</p>
+                <p>A análise dos resultados da simulação de Monte Carlo nos fornece insights valiosos sobre o potencial desempenho temporal de um novo projeto. Aqui estão algumas etapas e métricas importantes para considerar ao revisar os resultados:</p>
                 <ul>
-                    <li><strong>Provável Duração do Projeto</strong>: Baseada na média e desvio padrão do tempo total.</li>
-                    <li><strong>Riscos de Atraso</strong>: Identificar a probabilidade de o projeto exceder prazos críticos.</li>
-                    <li><strong>Planejamento de Recursos</strong>: Ajustar alocações de recursos com base em fases que tenham maior variabilidade de tempo.</li>
+                    <li><strong>Histograma de Tempo Total:</strong> Este gráfico mostra a distribuição de tempo total obtido em todas as simulações. Observamos a frequência de diferentes tempos, identificando o tempo mais provável e a amplitude dos resultados.</li>
+                    <li><strong>Provável Duração do Projeto</strong>: Baseada na média e desvio padrão do tempo total. Quanto maior o desvio padrão, maior a variabilidade do projeto.</li>
+                    <li><strong>Riscos de Atraso</strong>: Identificar a probabilidade de o projeto exceder prazos críticos. Através da calculadora de intervalos, pode-se verificar qual a probabilidade de o projeto ultrapassar os prazos críticos.</li>
                 </ul>
                 <p>Com este exemplo, a equipe pode melhorar o planejamento e execução do projeto, minimizando riscos de atrasos e otimizando a alocação de recursos em fases críticas.</p>
                 <img src="{{ url_for('static', filename='images/exemploTempo4.png') }}" alt="Gráfico marcado" class="img-fluid my-3 example-image">
+                <p>Por exemplo, digamos que o projeto será inviabilizado caso ultrapasse um prazo crítico de 60 dias. Com a análise de Monte Carlo, juntamente com a calculadora de intervalos, pode-se estimar que a probabilidade do projeto ultrapassar esse prazo é de 32,76%!</p>
             </section>
         </div>
     </div>
