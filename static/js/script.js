@@ -192,7 +192,7 @@ function updateParameterFields(selectElement) {
         case 'binary':
             parametersCell.innerHTML = `
                 <input type="number" class="form-control" name="binary_value" placeholder="Valor binário" step="any" required>
-                <small class="form-text text-muted">Este valor será multiplicado pelo vetor binário.</small>
+                <small class="form-text text-muted">Os valores gerados serão o número acima ou 0.</small>
             `;
             break;
         default:
@@ -353,7 +353,7 @@ function handleFormSubmit(e) {
 }
 
 function saveSimulationModel(data) {
-    const currentDate = new Date().toLocaleString('pt-BR', { timeZone: 'UTC' });
+    const currentDate = new Date().toLocaleString('pt-BR'); // Horário local da máquina do usuário
 
     let fileContent = `Simulação Montecarlo - Data ${currentDate}\n\n"variables":\n{`;
 
