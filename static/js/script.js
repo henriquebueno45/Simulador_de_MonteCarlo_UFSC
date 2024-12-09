@@ -26,15 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = maxSimulations;
             alert(`O número máximo de simulações permitido é ${maxSimulations}.`);
         }
-
-    const exampleLink = document.querySelector('a[href="/exemplos"]');
-    if (exampleLink) {
-        exampleLink.addEventListener('click', function(event) {
-            event.preventDefault();
-            const exampleModal = new bootstrap.Modal(document.getElementById('exampleModal'));
-            exampleModal.show();
-        });
-    }
     });
 
     const saveModelButton = document.getElementById('save-model-button');
@@ -125,7 +116,7 @@ function addTableRow() {
 
     const newRow = variablesTable.insertRow();
     const variableId = `V${variablesTable.rows.length}`;
-
+    
     newRow.innerHTML = `
         <td class="variable-id">${variableId}</td>
         <td><input type="text" class="form-control" name="variable_name" required></td>
@@ -231,6 +222,8 @@ function handleFormSubmit(e) {
         const variableName = cells[1].getElementsByTagName('input')[0].value;
         const distributionType = cells[2].getElementsByTagName('select')[0].value;
 
+        console.log(`Tipo de distribuição para ${variableId}: ${distributionType}`);
+
         const parameters = cells[3].getElementsByTagName('input');
 
         let variable = {
@@ -310,6 +303,42 @@ function handleFormSubmit(e) {
             generatedValues = data.values;
             createHistogram(generatedValues, data.mean, data.std_dev, 'plot');
             document.getElementById('interval-calculator').style.display = 'block';
+
+            // Cria um contêiner flexível para os botões
+            const buttonContainer = document.createElement('div');
+            buttonContainer.className = 'd-flex justify-content-between align-items-start mt-3';
+
+            // Adiciona o botão de "Gerar Relatório PDF"
+            const generatePdfButton = document.createElement('button');
+            generatePdfButton.textContent = 'Gerar Relatório PDF';
+            generatePdfButton.className = 'btn btn-primary';
+            generatePdfButton.addEventListener('click', function() {
+                console.log('Gerando PDF com dados:', data);
+                generatePDF(data);
+            });
+            buttonContainer.appendChild(generatePdfButton);
+
+            // Cria um contêiner para o botão e sua mensagem
+            const saveModelContainer = document.createElement('div');
+            saveModelContainer.style.display = 'flex';
+            saveModelContainer.style.flexDirection = 'column'; // Alinha os itens verticalmente
+            saveModelContainer.style.alignItems = 'center'; // Centraliza horizontalmente
+
+            // Adiciona o botão de "Salvar Modelo" com ícone de download
+            const saveModelButton = document.createElement('button');
+            saveModelButton.className = 'btn btn-secondary';
+            saveModelButton.innerHTML = '<i class="fas fa-download"></i>';
+            saveModelButton.title = 'Salvar Modelo';
+
+            saveModelButton.addEventListener('click', function() {
+                saveSimulationModel(data);
+            });
+
+            saveModelContainer.appendChild(saveModelButton);
+
+            // Adiciona o contêiner do botão e texto ao contêiner flexível
+            buttonContainer.appendChild(saveModelContainer);
+            document.getElementById('result').appendChild(buttonContainer);
         } else {
             console.error('Dados inválidos recebidos do servidor');
             document.getElementById('result').innerHTML += '<p>Erro: Dados inválidos recebidos do servidor</p>';
@@ -358,10 +387,8 @@ function saveSimulationModel(data) {
 
 function handleIntervalCalculation(e) {
     e.preventDefault();
-    // Substitui , por ponto
-
-    let minVal = document.getElementById('min_val').value.toLowerCase().replace(/,/g, ".");
-    let maxVal = document.getElementById('max_val').value.toLowerCase().replace(/,/g, ".");
+    let minVal = document.getElementById('min_val').value.toLowerCase();
+    let maxVal = document.getElementById('max_val').value.toLowerCase();
 
     fetch('/calculate_percentage', {
         method: 'POST',
@@ -606,7 +633,7 @@ async function generatePDF(data) {
         // Nome da empresa centralizado
         doc.setFontSize(16);
         doc.setTextColor(255, 255, 255); // Cor do texto em branco
-        const headerText = 'Relatório de Simulação de MonteCarlo';
+        const headerText = 'Relatório de Simulação de MonterCarlo';
         const textWidth = doc.getTextWidth(headerText);
         const pageWidth = doc.internal.pageSize.width;
         const textX = (pageWidth - textWidth + (logoWidth/2)) / 2; // Calcula a posição x para centralizar o texto
